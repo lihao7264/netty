@@ -68,6 +68,17 @@ public final class EpollDatagramChannel extends AbstractEpollChannel implements 
     private volatile boolean connected;
 
     /**
+     * Returns {@code true} if {@link io.netty.channel.unix.SegmentedDatagramPacket} is supported natively.
+     *
+     * @return {@code true} if supported, {@code false} otherwise.
+     */
+    public static boolean isSegmentedDatagramPacketSupported() {
+        return Epoll.isAvailable() &&
+                // We only support it together with sendmmsg(...)
+                Native.IS_SUPPORTING_SENDMMSG && Native.IS_SUPPORTING_UDP_SEGMENT;
+    }
+
+    /**
      * Create a new instance which selects the {@link InternetProtocolFamily} to use depending
      * on the Operation Systems default which will be chosen.
      */
@@ -300,7 +311,7 @@ public final class EpollDatagramChannel extends AbstractEpollChannel implements 
                 // Check if sendmmsg(...) is supported which is only the case for GLIBC 2.14+
                 if (Native.IS_SUPPORTING_SENDMMSG && in.size() > 1 ||
                         // We only handle UDP_SEGMENT in sendmmsg.
-                        in.current() instanceof SegmentedDatagramPacket) {
+                        in.current() instanceof io.netty.channel.unix.SegmentedDatagramPacket) {
                     NativeDatagramPacketArray array = cleanDatagramPacketArray();
                     array.add(in, isConnected(), maxMessagesPerWrite);
                     int cnt = array.count();
@@ -378,12 +389,12 @@ public final class EpollDatagramChannel extends AbstractEpollChannel implements 
 
     @Override
     protected Object filterOutboundMessage(Object msg) {
-        if (msg instanceof SegmentedDatagramPacket) {
+        if (msg instanceof io.netty.channel.unix.SegmentedDatagramPacket) {
             if (!Native.IS_SUPPORTING_UDP_SEGMENT) {
                 throw new UnsupportedOperationException(
                         "unsupported message type: " + StringUtil.simpleClassName(msg) + EXPECTED_TYPES);
             }
-            SegmentedDatagramPacket packet = (SegmentedDatagramPacket) msg;
+            io.netty.channel.unix.SegmentedDatagramPacket packet = (io.netty.channel.unix.SegmentedDatagramPacket) msg;
             ByteBuf content = packet.content();
             return UnixChannelUtil.isBufferCopyNeededForWrite(content) ?
                     packet.replace(newDirectBuffer(packet, content)) : msg;

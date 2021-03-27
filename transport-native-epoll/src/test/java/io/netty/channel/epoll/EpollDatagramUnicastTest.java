@@ -30,7 +30,6 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -75,7 +74,7 @@ public class EpollDatagramUnicastTest extends DatagramUnicastTest {
             // Only supported for the native epoll transport.
             return;
         }
-        Assume.assumeTrue(SegmentedDatagramPacket.isSupported());
+        Assume.assumeTrue(EpollDatagramChannel.isSegmentedDatagramPacketSupported());
         Channel sc = null;
         Channel cc = null;
 
@@ -115,7 +114,7 @@ public class EpollDatagramUnicastTest extends DatagramUnicastTest {
             } else {
                 buffer = Unpooled.directBuffer(bufferCapacity).writeZero(bufferCapacity);
             }
-            cc.writeAndFlush(new SegmentedDatagramPacket(buffer, segmentSize, addr)).sync();
+            cc.writeAndFlush(new io.netty.channel.unix.SegmentedDatagramPacket(buffer, segmentSize, addr)).sync();
 
             if (!latch.await(10, TimeUnit.SECONDS)) {
                 Throwable error = errorRef.get();

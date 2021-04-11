@@ -39,14 +39,14 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
      * @see AbstractNioChannel#AbstractNioChannel(Channel, SelectableChannel, int)
      */
     protected AbstractNioMessageChannel(Channel parent, SelectableChannel ch, int readInterestOp) {
-        super(parent, ch, readInterestOp);
+        super(parent, ch, readInterestOp); // 直接调用父 AbstractNioChannel 的构造方法。
     }
 
     @Override
     protected AbstractNioUnsafe newUnsafe() {
         return new NioMessageUnsafe();
     }
-
+    // 对于 NioServerSocketChannel 来说,是这个实现
     @Override
     protected void doBeginRead() throws Exception {
         if (inputShutdown) {

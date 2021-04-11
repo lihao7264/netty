@@ -26,11 +26,11 @@ import io.netty.util.internal.StringUtil;
 import java.net.SocketAddress;
 import java.util.Map;
 
-/**
+/** BootstrapConfig 抽象类。（公开{@link AbstractBootstrap}的配置。）
  * Exposes the configuration of an {@link AbstractBootstrap}.
  */
 public abstract class AbstractBootstrapConfig<B extends AbstractBootstrap<B, C>, C extends Channel> {
-
+    // bootstrap 属性，对应的启动类对象。在每个方法中，我们可以看到，都是直接调用 boostrap 属性对应的方法，读取对应的配置。
     protected final B bootstrap;
 
     protected AbstractBootstrapConfig(B bootstrap) {
@@ -66,14 +66,14 @@ public abstract class AbstractBootstrapConfig<B extends AbstractBootstrap<B, C>,
         return bootstrap.options();
     }
 
-    /**
+    /** 返回已配置属性的副本。(attrs)
      * Returns a copy of the configured attributes.
      */
     public final Map<AttributeKey<?>, Object> attrs() {
         return bootstrap.attrs();
     }
 
-    /**
+    /** 返回已配置的{@link EventLoopGroup}或{@code null}（如果尚未配置）。
      * Returns the configured {@link EventLoopGroup} or {@code null} if non is configured yet.
      */
     @SuppressWarnings("deprecation")

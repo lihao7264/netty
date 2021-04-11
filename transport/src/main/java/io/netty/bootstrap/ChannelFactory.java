@@ -17,13 +17,13 @@ package io.netty.bootstrap;
 
 import io.netty.channel.Channel;
 
-/**
+/** Channel 工厂接口，用于创建 Channel 对象。
  * @deprecated Use {@link io.netty.channel.ChannelFactory} instead.
  */
 @Deprecated
 public interface ChannelFactory<T extends Channel> {
     /**
-     * Creates a new channel.
+     * Creates a new channel. 创建 Channel 对象
      */
     T newChannel();
 }

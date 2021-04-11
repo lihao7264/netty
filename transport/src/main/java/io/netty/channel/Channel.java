@@ -27,7 +27,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 
 
-/**
+/** 可以把 Netty Channel 和 Java 原生 Socket 对应，而 Netty NIO Channel 和 Java 原生 NIO SocketChannel 对象。
  * A nexus to a network socket or a component which is capable of I/O
  * operations such as read, write, connect, and bind.
  * <p>
@@ -193,7 +193,7 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
     @Override
     Channel flush();
 
-    /**
+    /**  Unsafe 操作不允许被用户代码使用。这些函数是真正用于数据传输操作，必须被IO线程调用。(Channel 真正的具体操作，通过调用对应的 Unsafe 实现。)
      * <em>Unsafe</em> operations that should <em>never</em> be called from user-code. These methods
      * are only provided to implement the actual transport, and must be invoked from an I/O thread except for the
      * following methods:
@@ -253,13 +253,13 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
          */
         void disconnect(ChannelPromise promise);
 
-        /**
+        /** 关闭{@link ChannelPromise}的{@link Channel}，并在操作完成后通知{@link ChannelPromise}。
          * Close the {@link Channel} of the {@link ChannelPromise} and notify the {@link ChannelPromise} once the
          * operation was complete.
          */
         void close(ChannelPromise promise);
 
-        /**
+        /** 立即关闭{@link Channel}而不触发任何事件。可能仅在注册尝试失败时有用。
          * Closes the {@link Channel} immediately without firing any events.  Probably only useful
          * when registration attempt failed.
          */

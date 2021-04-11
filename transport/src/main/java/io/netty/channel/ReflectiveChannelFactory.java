@@ -21,17 +21,17 @@ import io.netty.util.internal.StringUtil;
 
 import java.lang.reflect.Constructor;
 
-/**
+/** ReflectiveChannelFactory 实现 ChannelFactory 接口，反射调用默认构造方法，创建Channel对象的工厂实现类。
  * A {@link ChannelFactory} that instantiates a new {@link Channel} by invoking its default constructor reflectively.
- */
+ */ // 一个{@link ChannelFactory}，通过反射性地调用其默认构造函数来实例化新的{@link Channel}。
 public class ReflectiveChannelFactory<T extends Channel> implements ChannelFactory<T> {
-
+    // Channel 对应的类构造器
     private final Constructor<? extends T> constructor;
 
     public ReflectiveChannelFactory(Class<? extends T> clazz) {
         ObjectUtil.checkNotNull(clazz, "clazz");
         try {
-            this.constructor = clazz.getConstructor();
+            this.constructor = clazz.getConstructor(); // 反射调用 Channel 的默认构造方法
         } catch (NoSuchMethodException e) {
             throw new IllegalArgumentException("Class " + StringUtil.simpleClassName(clazz) +
                     " does not have a public non-arg constructor", e);
@@ -41,7 +41,7 @@ public class ReflectiveChannelFactory<T extends Channel> implements ChannelFacto
     @Override
     public T newChannel() {
         try {
-            return constructor.newInstance();
+            return constructor.newInstance(); // 反射调用默认构造方法，创建 Channel 对象
         } catch (Throwable t) {
             throw new ChannelException("Unable to create Channel from class " + constructor.getDeclaringClass(), t);
         }

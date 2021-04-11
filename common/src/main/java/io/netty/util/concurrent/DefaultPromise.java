@@ -575,7 +575,7 @@ public class DefaultPromise<V> extends AbstractFuture<V> implements Promise<V> {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private static void notifyListener0(Future future, GenericFutureListener l) {
         try {
-            l.operationComplete(future);
+            l.operationComplete(future); // 向 regFuture 注册的 ChannelFutureListener ，就会被立即回调执行。(绑定的回调)
         } catch (Throwable t) {
             if (logger.isWarnEnabled()) {
                 logger.warn("An exception was thrown by " + l.getClass().getName() + ".operationComplete()", t);

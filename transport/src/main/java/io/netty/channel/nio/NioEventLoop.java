@@ -112,7 +112,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
      * The NIO {@link Selector}.
      */
     private Selector selector;
-    private Selector unwrappedSelector;
+    private Selector unwrappedSelector; // 每个 NioEventLoop 对象上，都独有一个 Selector 对象
     private SelectedSelectionKeySet selectedKeys;
 
     private final SelectorProvider provider;
@@ -798,7 +798,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     }
 
     Selector unwrappedSelector() {
-        return unwrappedSelector;
+        return unwrappedSelector; // 调用 #unwrappedSelector() 方法，返回 Java 原生 NIO Selector 对象。
     }
 
     int selectNow() throws IOException {

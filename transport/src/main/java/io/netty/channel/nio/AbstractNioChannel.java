@@ -50,8 +50,8 @@ public abstract class AbstractNioChannel extends AbstractChannel {
     private static final InternalLogger logger =
             InternalLoggerFactory.getInstance(AbstractNioChannel.class);
 
-    private final SelectableChannel ch;
-    protected final int readInterestOp;
+    private final SelectableChannel ch; // Netty NIO Channel 对象，持有的 Java 原生 NIO 的 Channel 对象。
+    protected final int readInterestOp; // 感兴趣的读事件的操作位值
     volatile SelectionKey selectionKey;
     boolean readPending;
     private final Runnable clearReadPendingRunnable = new Runnable() {
@@ -77,14 +77,14 @@ public abstract class AbstractNioChannel extends AbstractChannel {
      * @param readInterestOp    the ops to set to receive data from the {@link SelectableChannel}
      */
     protected AbstractNioChannel(Channel parent, SelectableChannel ch, int readInterestOp) {
-        super(parent);
-        this.ch = ch;
-        this.readInterestOp = readInterestOp;
+        super(parent); // 调用父 AbstractNioChannel 的构造方法。
+        this.ch = ch;  // 设置Netty NIO Channel 对象，持有的 Java 原生 NIO 的 Channel 对象。
+        this.readInterestOp = readInterestOp; // 感兴趣的读事件的操作位值。
         try {
-            ch.configureBlocking(false);
+            ch.configureBlocking(false); // 设置 NIO Channel 为非阻塞。
         } catch (IOException e) {
             try {
-                ch.close();
+                ch.close(); // 若发生异常，关闭 NIO Channel ，并抛出异常。
             } catch (IOException e2) {
                 logger.warn(
                             "Failed to close a partially initialized socket.", e2);
@@ -96,7 +96,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
 
     @Override
     public boolean isOpen() {
-        return ch.isOpen();
+        return ch.isOpen();  // 是否打开
     }
 
     @Override
@@ -104,7 +104,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         return (NioUnsafe) super.unsafe();
     }
 
-    protected SelectableChannel javaChannel() {
+    protected SelectableChannel javaChannel() { // 获得 Java 原生 NIO 的 Channel 对象
         return ch;
     }
 
@@ -366,10 +366,10 @@ public abstract class AbstractNioChannel extends AbstractChannel {
             return selectionKey.isValid() && (selectionKey.interestOps() & SelectionKey.OP_WRITE) != 0;
         }
     }
-
+    // 校验 Channel 和 eventLoop 类型是否匹配，因为它们都有多种实现类型。
     @Override
     protected boolean isCompatible(EventLoop loop) {
-        return loop instanceof NioEventLoop;
+        return loop instanceof NioEventLoop; // 要求 eventLoop 的类型为 NioEventLoop 。
     }
 
     @Override
@@ -377,10 +377,10 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         boolean selected = false;
         for (;;) {
             try {
-                selectionKey = javaChannel().register(eventLoop().unwrappedSelector(), 0, this);
+                selectionKey = javaChannel().register(eventLoop().unwrappedSelector(), 0, this); // 注册 Java 原生 NIO 的 Channel 对象到 Selector 对象上。(感兴趣的事件是为 0 )
                 return;
             } catch (CancelledKeyException e) {
-                if (!selected) {
+                if (!selected) { // doRegister 异常
                     // Force the Selector to select now as the "canceled" SelectionKey may still be
                     // cached and not removed because no Select.select(..) operation was called yet.
                     eventLoop().selectNow();
@@ -408,7 +408,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         }
 
         readPending = true;
-
+        // 将创建 NioServerSocketChannel 时，设置的 readInterestOp = SelectionKey.OP_ACCEPT 添加为感兴趣的事件。(服务端可以开始处理客户端的连接事件。)
         final int interestOps = selectionKey.interestOps();
         if ((interestOps & readInterestOp) == 0) {
             selectionKey.interestOps(interestOps | readInterestOp);

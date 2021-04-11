@@ -47,10 +47,10 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
                              implements io.netty.channel.socket.ServerSocketChannel {
 
     private static final ChannelMetadata METADATA = new ChannelMetadata(false, 16);
-    private static final SelectorProvider DEFAULT_SELECTOR_PROVIDER = SelectorProvider.provider();
+    private static final SelectorProvider DEFAULT_SELECTOR_PROVIDER = SelectorProvider.provider(); // 默认的 SelectorProvider 实现类。
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(NioServerSocketChannel.class);
-
+    // 创建 NIO 的 ServerSocketChannel 对象(效果和 ServerSocketChannel#open() 方法创建 ServerSocketChannel 对象是一致。)
     private static ServerSocketChannel newSocket(SelectorProvider provider) {
         try {
             /**
@@ -65,7 +65,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
                     "Failed to open a server socket.", e);
         }
     }
-
+    // Channel 对应的配置对象。(每种 Channel 实现类，也会对应一个 ChannelConfig 实现类。例如:NioServerSocketChannel类，对应 ServerSocketChannelConfig 配置类。)
     private final ServerSocketChannelConfig config;
 
     /**
@@ -86,8 +86,8 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
      * Create a new instance using the given {@link ServerSocketChannel}.
      */
     public NioServerSocketChannel(ServerSocketChannel channel) {
-        super(null, channel, SelectionKey.OP_ACCEPT);
-        config = new NioServerSocketChannelConfig(this, javaChannel().socket());
+        super(null, channel, SelectionKey.OP_ACCEPT); // 调用父 AbstractNioMessageChannel 的构造方法。(传入的 SelectionKey 的值为 OP_ACCEPT 。) ---  AbstractNioMessageChannel 是 SelectionKey.OP_ACCEPT
+        config = new NioServerSocketChannelConfig(this, javaChannel().socket()); // 初始化 config 属性，创建 NioServerSocketChannelConfig 对象。
     }
 
     @Override
@@ -104,12 +104,12 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
     public ServerSocketChannelConfig config() {
         return config;
     }
-
+    // 获得 Channel 是否激活( active )。
     @Override
     public boolean isActive() {
         // As java.nio.ServerSocketChannel.isBound() will continue to return true even after the channel was closed
         // we will also need to check if it is open.
-        return isOpen() && javaChannel().socket().isBound();
+        return isOpen() && javaChannel().socket().isBound(); // 判断 ServerSocketChannel 是否绑定端口。
     }
 
     @Override
@@ -126,14 +126,14 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
     protected SocketAddress localAddress0() {
         return SocketUtils.localSocketAddress(javaChannel().socket());
     }
-
+    //  绑定 Channel 的端口。 （服务端的 Java 原生 NIO ServerSocketChannel 终于绑定端口）
     @SuppressJava6Requirement(reason = "Usage guarded by java version check")
     @Override
     protected void doBind(SocketAddress localAddress) throws Exception {
         if (PlatformDependent.javaVersion() >= 7) {
-            javaChannel().bind(localAddress, config.getBacklog());
+            javaChannel().bind(localAddress, config.getBacklog()); // java.nio.channels.NetworkChannel类出现之后才能使用该方法
         } else {
-            javaChannel().socket().bind(localAddress, config.getBacklog());
+            javaChannel().socket().bind(localAddress, config.getBacklog()); // java 7以下
         }
     }
 

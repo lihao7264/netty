@@ -20,7 +20,7 @@ import io.netty.util.concurrent.EventExecutor;
 
 import java.net.InetSocketAddress;
 
-/**
+/** 地址解析器
  * A {@link AddressResolverGroup} of {@link DefaultNameResolver}s.
  */
 public final class DefaultAddressResolverGroup extends AddressResolverGroup<InetSocketAddress> {

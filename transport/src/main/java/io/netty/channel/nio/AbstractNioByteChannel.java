@@ -63,7 +63,7 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
      * @param ch                the underlying {@link SelectableChannel} on which it operates
      */
     protected AbstractNioByteChannel(Channel parent, SelectableChannel ch) {
-        super(parent, ch, SelectionKey.OP_READ); // 而 AbstractNioByteChannel 是 SelectionKey.OP_READ 。
+        super(parent, ch, SelectionKey.OP_READ); //调用父 AbstractNioChannel 的构造方法,后续的构造方法，和 NioServerSocketChannel 是一致的。。( 而 AbstractNioByteChannel 是 SelectionKey.OP_READ 。)
     }
 
     /**

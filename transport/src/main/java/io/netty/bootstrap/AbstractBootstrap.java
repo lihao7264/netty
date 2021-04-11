@@ -303,7 +303,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             return promise;
         }
     }
-    // 初始化并注册一个 Channel 对象，并返回一个 ChannelFuture 对象。
+    // 初始化并注册一个 Channel 对象，并返回一个 ChannelFuture 对象。(Bootstrap 跟 ServerBootstrap流程是一致的，区别就是a、创建的 Channel 对象不同。b、初始化 Channel 配置的代码实现不同。)
     final ChannelFuture initAndRegister() {
         Channel channel = null;
         try {

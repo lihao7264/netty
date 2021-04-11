@@ -57,7 +57,7 @@ import static io.netty.channel.internal.ChannelUtils.MAX_BYTES_PER_GATHERING_WRI
 public class NioSocketChannel extends AbstractNioByteChannel implements io.netty.channel.socket.SocketChannel {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(NioSocketChannel.class);
     private static final SelectorProvider DEFAULT_SELECTOR_PROVIDER = SelectorProvider.provider();
-
+    // 创建 NIO 的 SocketChannel 对象。
     private static SocketChannel newSocket(SelectorProvider provider) {
         try {
             /**
@@ -66,19 +66,19 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
              *
              *  See <a href="https://github.com/netty/netty/issues/2308">#2308</a>.
              */
-            return provider.openSocketChannel();
+            return provider.openSocketChannel(); // 效果和 SocketChannel#open() 方法创建 SocketChannel 对象是一致。
         } catch (IOException e) {
             throw new ChannelException("Failed to open a socket.", e);
         }
     }
 
-    private final SocketChannelConfig config;
-
+    private final SocketChannelConfig config; // Channel 对应的配置对象。每种 Channel 实现类，也会对应一个 ChannelConfig 实现类。(例如:NioSocketChannel 类，对应 SocketChannelConfig 配置类。)
+    /************************** 四个重载的构造函数 ***********************************/
     /**
      * Create a new instance
      */
     public NioSocketChannel() {
-        this(DEFAULT_SELECTOR_PROVIDER);
+        this(DEFAULT_SELECTOR_PROVIDER); // DEFAULT_SELECTOR_PROVIDER 静态属性，默认的 SelectorProvider 实现类。
     }
 
     /**
@@ -92,7 +92,7 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
      * Create a new instance using the given {@link SocketChannel}.
      */
     public NioSocketChannel(SocketChannel socket) {
-        this(null, socket);
+        this(null, socket); // 调用父 AbstractNioByteChannel 的构造方法。
     }
 
     /**
@@ -102,8 +102,8 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
      * @param socket    the {@link SocketChannel} which will be used
      */
     public NioSocketChannel(Channel parent, SocketChannel socket) {
-        super(parent, socket);
-        config = new NioSocketChannelConfig(this, socket.socket());
+        super(parent, socket); // 调用父 AbstractNioByteChannel 的构造方法。
+        config = new NioSocketChannelConfig(this, socket.socket()); // 初始化 config 属性，创建 NioSocketChannelConfig 对象。
     }
 
     @Override

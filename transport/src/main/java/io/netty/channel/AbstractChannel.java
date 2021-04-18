@@ -37,7 +37,7 @@ import java.nio.channels.NotYetConnectedException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 
-/** 对Channel的抽象
+/** 对Channel的抽象 (骨架)
  * A skeletal {@link Channel} implementation.
  */
 public abstract class AbstractChannel extends DefaultAttributeMap implements Channel {
@@ -46,14 +46,14 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
     private final Channel parent;  //  父 Channel 对象(对于 NioServerSocketChannel 的 parent 为空。)
     private final ChannelId id;  //  Channel 编号（每个Channel的唯一标识）
-    private final Unsafe unsafe; //  Unsafe 对象(io.netty.channel.Channel#Unsafe) --- 跟tcp相关的读写
+    private final Unsafe unsafe; //  Unsafe 对象(io.netty.channel.Channel#Unsafe) --- 跟tcp相关的读写 （一个Unsafe跟一个Channel唯一绑定）
     private final DefaultChannelPipeline pipeline; // DefaultChannelPipeline 对象
     private final VoidChannelPromise unsafeVoidPromise = new VoidChannelPromise(this, false);
     private final CloseFuture closeFuture = new CloseFuture(this);
 
     private volatile SocketAddress localAddress;
     private volatile SocketAddress remoteAddress;
-    private volatile EventLoop eventLoop; // 绑定线程（也就是 接受连接的线程组 ） --- bossGroup
+    private volatile EventLoop eventLoop; // 绑定线程（如果是NioServerSocketChannel 的话，也就是 接受连接的线程组--- --- bossGroup ）
     private volatile boolean registered;  // 是否注册(registered 变量声明在 AbstractChannel 中)
     private boolean closeInitiated;
     private Throwable initialCloseCause;
@@ -69,7 +69,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
      *        the parent of this channel. {@code null} if there's no parent.
      */
     protected AbstractChannel(Channel parent) {
-        this.parent = parent;
+        this.parent = parent;// 如果是创建客户端Channel，这里的parent就是服务端的netty channel
         id = newId();  // 创建 ChannelId 对象
         unsafe = newUnsafe();  // 创建 Unsafe 对象
         pipeline = newChannelPipeline();  // 创建 DefaultChannelPipeline 对象（逻辑链）

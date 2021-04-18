@@ -42,7 +42,7 @@ import java.nio.channels.SelectionKey;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-/**
+/** Channel的抽象实现（基于Selector的实现IO事件的监听）
  * Abstract base class for {@link Channel} implementations which use a Selector based approach.
  */
 public abstract class AbstractNioChannel extends AbstractChannel {
@@ -52,7 +52,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
 
     private final SelectableChannel ch; // Netty NIO Channel 对象，持有的 Java 原生 NIO 的 Channel 对象。
     protected final int readInterestOp; // 感兴趣的读事件的操作位值
-    volatile SelectionKey selectionKey;
+    volatile SelectionKey selectionKey; // 不管是服务端channel还是客户端channel，注册到selector上之后，都会有一个key
     boolean readPending;
     private final Runnable clearReadPendingRunnable = new Runnable() {
         @Override
@@ -78,7 +78,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
      */
     protected AbstractNioChannel(Channel parent, SelectableChannel ch, int readInterestOp) {
         super(parent); // 调用父 AbstractNioChannel 的构造方法。
-        this.ch = ch;  // 设置Netty NIO Channel 对象，持有的 Java 原生 NIO 的 Channel 对象。（jdk底层的Channel）
+        this.ch = ch;  // 设置Netty NIO Channel 对象，持有的 Java 原生 NIO 的 Channel 对象。（jdk底层的Channel，比如SocketChannel）
         this.readInterestOp = readInterestOp; // 感兴趣的读事件的操作位值。
         try {
             ch.configureBlocking(false); // 设置 NIO Channel 为非阻塞。

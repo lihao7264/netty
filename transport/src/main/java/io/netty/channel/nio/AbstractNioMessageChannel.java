@@ -61,14 +61,14 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
 
     private final class NioMessageUnsafe extends AbstractNioUnsafe {
 
-        private final List<Object> readBuf = new ArrayList<Object>();
+        private final List<Object> readBuf = new ArrayList<Object>(); // 服务端channel的 MessageUnsafe的一个field（临时保存读取到的新连接）
 
         @Override
         public void read() {
             assert eventLoop().inEventLoop();
             final ChannelConfig config = config();
             final ChannelPipeline pipeline = pipeline();
-            final RecvByteBufAllocator.Handle allocHandle = unsafe().recvBufAllocHandle();
+            final RecvByteBufAllocator.Handle allocHandle = unsafe().recvBufAllocHandle(); // 控制服务端接入的速率，默认一次连接接入的数量是16个
             allocHandle.reset(config);
 
             boolean closed = false;
@@ -76,7 +76,7 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
             try {
                 try {
                     do {
-                        int localRead = doReadMessages(readBuf);
+                        int localRead = doReadMessages(readBuf); // 获取到连接，就返回1
                         if (localRead == 0) {
                             break;
                         }
@@ -85,8 +85,8 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
                             break;
                         }
 
-                        allocHandle.incMessagesRead(localRead);
-                    } while (continueReading(allocHandle));
+                        allocHandle.incMessagesRead(localRead); // 读取到连接数+1
+                    } while (continueReading(allocHandle)); //
                 } catch (Throwable t) {
                     exception = t;
                 }

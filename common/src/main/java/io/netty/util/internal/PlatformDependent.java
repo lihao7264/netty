@@ -90,7 +90,7 @@ public final class PlatformDependent {
 
     private static final boolean MAYBE_SUPER_USER;
 
-    private static final boolean CAN_ENABLE_TCP_NODELAY_BY_DEFAULT = !isAndroid();
+    private static final boolean CAN_ENABLE_TCP_NODELAY_BY_DEFAULT = !isAndroid(); // 如果是安卓系统，为false，否则，为true
 
     private static final Throwable UNSAFE_UNAVAILABILITY_CAUSE = unsafeUnavailabilityCause0();
     private static final boolean DIRECT_BUFFER_PREFERRED;
@@ -290,7 +290,7 @@ public final class PlatformDependent {
     /**
      * Returns {@code true} if and only if the current platform is Android
      */
-    public static boolean isAndroid() {
+    public static boolean isAndroid() { //是否是安卓操作系统
         return PlatformDependent0.isAndroid();
     }
 

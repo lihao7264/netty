@@ -37,7 +37,7 @@ import static io.netty.channel.ChannelOption.*;
 public class DefaultSocketChannelConfig extends DefaultChannelConfig
                                         implements SocketChannelConfig {
 
-    protected final Socket javaSocket;
+    protected final Socket javaSocket; // 底层的socket
     private volatile boolean allowHalfClosure;
 
     /**
@@ -45,12 +45,12 @@ public class DefaultSocketChannelConfig extends DefaultChannelConfig
      */
     public DefaultSocketChannelConfig(SocketChannel channel, Socket javaSocket) {
         super(channel);
-        this.javaSocket = ObjectUtil.checkNotNull(javaSocket, "javaSocket");
+        this.javaSocket = ObjectUtil.checkNotNull(javaSocket, "javaSocket"); // 保存底层的socket
 
         // Enable TCP_NODELAY by default if possible.
-        if (PlatformDependent.canEnableTcpNoDelayByDefault()) {
+        if (PlatformDependent.canEnableTcpNoDelayByDefault()) { // 如果可能，默认情况下启用TCP_NODELAY。(安卓系统下为false)
             try {
-                setTcpNoDelay(true);
+                setTcpNoDelay(true); // 设置禁止Negle算法（小的数据包会尽可能发出去，降低延时）
             } catch (Exception e) {
                 // Ignore.
             }
@@ -250,7 +250,7 @@ public class DefaultSocketChannelConfig extends DefaultChannelConfig
     @Override
     public SocketChannelConfig setTcpNoDelay(boolean tcpNoDelay) {
         try {
-            javaSocket.setTcpNoDelay(tcpNoDelay);
+            javaSocket.setTcpNoDelay(tcpNoDelay); // 设置禁止Negle算法
         } catch (SocketException e) {
             throw new ChannelException(e);
         }

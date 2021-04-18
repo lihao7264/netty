@@ -61,7 +61,7 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
      *
      * @param parent            the parent {@link Channel} by which this instance was created. May be {@code null}
      * @param ch                the underlying {@link SelectableChannel} on which it operates
-     */
+     */ // 此channel对OP_READ读事件感兴趣
     protected AbstractNioByteChannel(Channel parent, SelectableChannel ch) {
         super(parent, ch, SelectionKey.OP_READ); //调用父 AbstractNioChannel 的构造方法,后续的构造方法，和 NioServerSocketChannel 是一致的。。( 而 AbstractNioByteChannel 是 SelectionKey.OP_READ 。)
     }
@@ -310,7 +310,7 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
      */
     protected abstract long doWriteFileRegion(FileRegion region) throws Exception;
 
-    /**
+    /** 将字节读取到给定的{@link ByteBuf}中并返回数量。
      * Read bytes into the given {@link ByteBuf} and return the amount.
      */
     protected abstract int doReadBytes(ByteBuf buf) throws Exception;

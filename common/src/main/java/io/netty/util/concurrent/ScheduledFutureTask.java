@@ -32,7 +32,7 @@ final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFu
     }
 
     static long deadlineNanos(long delay) {
-        long deadlineNanos = nanoTime() + delay; //
+        long deadlineNanos = nanoTime() + delay; // 定时到某个时间点
         // Guard against overflow
         return deadlineNanos < 0 ? Long.MAX_VALUE : deadlineNanos;
     }
@@ -105,11 +105,11 @@ final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFu
         return deadlineNanos;
     }
 
-    void setConsumed() {
+    void setConsumed() { // 进行优化以避免在截止日期已过并且任务已出队后再次检查系统时钟
         // Optimization to avoid checking system clock again
         // after deadline has passed and task has been dequeued
         if (periodNanos == 0) {
-            assert nanoTime() >= deadlineNanos;
+            assert nanoTime() >= deadlineNanos; // 时间 大于 截止时间
             deadlineNanos = 0L;
         }
     }
@@ -131,13 +131,13 @@ final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFu
     public long getDelay(TimeUnit unit) {
         return unit.convert(delayNanos(), TimeUnit.NANOSECONDS);
     }
-
+    // 比较方法：用于排序
     @Override
     public int compareTo(Delayed o) {
         if (this == o) {
             return 0;
         }
-
+        // 比较两个任务的时候，比较两个任务的截止时间（截止时间最小的在前面，最大的在后面），如果截止时间相等，就通过截止时间的id进行比较（添加的越晚，id越大）
         ScheduledFutureTask<?> that = (ScheduledFutureTask<?>) o;
         long d = deadlineNanos() - that.deadlineNanos();
         if (d < 0) {

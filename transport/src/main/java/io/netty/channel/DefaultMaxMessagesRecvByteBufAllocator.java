@@ -86,11 +86,11 @@ public abstract class DefaultMaxMessagesRecvByteBufAllocator implements MaxMessa
      */
     public abstract class MaxMessageHandle implements ExtendedHandle {
         private ChannelConfig config;
-        private int maxMessagePerRead;
-        private int totalMessages;
+        private int maxMessagePerRead; // 每次最多读取多少连接（默认16）
+        private int totalMessages; // 当前读取的连接总数
         private int totalBytesRead;
-        private int attemptedBytesRead;
-        private int lastBytesRead;
+        private int attemptedBytesRead; //
+        private int lastBytesRead;//
         private final boolean respectMaybeMoreData = DefaultMaxMessagesRecvByteBufAllocator.this.respectMaybeMoreData;
         private final UncheckedBooleanSupplier defaultMaybeMoreSupplier = new UncheckedBooleanSupplier() {
             @Override
@@ -142,7 +142,7 @@ public abstract class DefaultMaxMessagesRecvByteBufAllocator implements MaxMessa
             return config.isAutoRead() &&
                    (!respectMaybeMoreData || maybeMoreDataSupplier.get()) &&
                    totalMessages < maxMessagePerRead &&
-                   totalBytesRead > 0;
+                   totalBytesRead > 0; // 是否自动读且每次读取的连接数是否超过某个值，读取总字节数是否大于0
         }
 
         @Override

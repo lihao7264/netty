@@ -81,7 +81,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
             scheduledTaskQueue = new DefaultPriorityQueue<ScheduledFutureTask<?>>(
                     SCHEDULED_FUTURE_TASK_COMPARATOR,
                     // Use same initial capacity as java.util.PriorityQueue
-                    11);
+                    11); // 如果scheduledTaskQueue为空，则创建初始化大小为11的DefaultPriorityQueue
         }
         return scheduledTaskQueue;
     }
@@ -130,9 +130,9 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
         if (scheduledTask == null || scheduledTask.deadlineNanos() - nanoTime > 0) {// 没有任务或者延迟的时间还没到
             return null;
         }
-        scheduledTaskQueue.remove(); //从延迟任务队列中删除
+        scheduledTaskQueue.remove(); //从定时任务队列中删除
         scheduledTask.setConsumed(); //设置没延迟了
-        return scheduledTask;
+        return scheduledTask; // 返回定时任务
     }
 
     /**
@@ -152,7 +152,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
         return scheduledTask != null ? scheduledTask.deadlineNanos() : -1; // 获取定时任务队列第一个任务的截止时间
     }
 
-    final ScheduledFutureTask<?> peekScheduledTask() {
+    final ScheduledFutureTask<?> peekScheduledTask() { // 获取到第一个任务
         Queue<ScheduledFutureTask<?>> scheduledTaskQueue = this.scheduledTaskQueue;
         return scheduledTaskQueue != null ? scheduledTaskQueue.peek() : null;
     }
@@ -179,7 +179,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
                 command,
                 deadlineNanos(unit.toNanos(delay))));
     }
-
+    // callable就是一个任务
     @Override
     public <V> ScheduledFuture<V> schedule(Callable<V> callable, long delay, TimeUnit unit) {
         ObjectUtil.checkNotNull(callable, "callable");
@@ -187,9 +187,9 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
         if (delay < 0) {
             delay = 0;
         }
-        validateScheduled0(delay, unit);
+        validateScheduled0(delay, unit); // 校验定时时间
 
-        return schedule(new ScheduledFutureTask<V>(this, callable, deadlineNanos(unit.toNanos(delay))));
+        return schedule(new ScheduledFutureTask<V>(this, callable, deadlineNanos(unit.toNanos(delay)))); // callable任务被封装成ScheduledFutureTask
     }
 
     @Override
@@ -248,13 +248,13 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
 
     final void scheduleFromEventLoop(final ScheduledFutureTask<?> task) {
         // nextTaskId a long and so there is no chance it will overflow back to 0
-        scheduledTaskQueue().add(task.setId(++nextTaskId));
+        scheduledTaskQueue().add(task.setId(++nextTaskId)); // 设置任务id，直接进行添加
     }
 
     private <V> ScheduledFuture<V> schedule(final ScheduledFutureTask<V> task) {
-        if (inEventLoop()) {
+        if (inEventLoop()) { // 是否是 当前NioEventLoop线程 发起的schedule
             scheduleFromEventLoop(task);
-        } else {
+        } else { // 如果是外部线程发起的schedule，则把添加操作编程线程安全的操作 （scheduledTaskQueue是非线程安全的）
             final long deadlineNanos = task.deadlineNanos();
             // task will add itself to scheduled task queue when run if not expired
             if (beforeScheduledTaskSubmitted(deadlineNanos)) {

@@ -168,7 +168,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         this.addTaskWakesUp = addTaskWakesUp;
         this.maxPendingTasks = DEFAULT_MAX_PENDING_EXECUTOR_TASKS;
         this.executor = ThreadExecutorMap.apply(executor, this); // 保存线程执行器（作用：创建NioEventLoop底层的线程）
-        this.taskQueue = ObjectUtil.checkNotNull(taskQueue, "taskQueue"); // taskQueue:主要用于 外部线程在执行Netty的一些任务的时候，如果判断不是在NioEventLoop对应的线程里面去执行，而直接塞到一个任务队列中，然后由NioEventLoop对应的一个线程去执行
+        this.taskQueue = ObjectUtil.checkNotNull(taskQueue, "taskQueue"); // taskQueue:主要用于 外部线程在执行Netty的一些任务的时候，如果判断不是在NioEventLoop对应的线程里面去执行，而直接塞到一个任务队列中，然后由NioEventLoop对应的一个线程去执行（创建一个mpsc queue）
         this.rejectedExecutionHandler = ObjectUtil.checkNotNull(rejectedHandler, "rejectedHandler");
     }
 
@@ -280,12 +280,12 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
             return true; //要调度的任务为空就返回
         }
         long nanoTime = AbstractScheduledEventExecutor.nanoTime(); //获取已经执行任务消耗的时间
-        for (;;) {
-            Runnable scheduledTask = pollScheduledTask(nanoTime); //获取可以执行的调度任务
+        for (;;) { // 循环从定时任务队列获取任务添加到普通任务队列中
+            Runnable scheduledTask = pollScheduledTask(nanoTime); //获取可以执行的定时任务
             if (scheduledTask == null) {
                 return true; //任务为空返回
             }
-            if (!taskQueue.offer(scheduledTask)) { // 任务队列中没有剩余空间，将其重新添加到ScheduledTaskQueue中，因此我们再次进行拾取。(如果无法放入任务队列，就放回去)
+            if (!taskQueue.offer(scheduledTask)) { // 将定时任务添加到普通任务队列中，如果普通任务队列中没有剩余空间，将其重新添加到ScheduledTaskQueue中，因此我们再次进行拾取。(如果无法放入任务队列，就放回去)
                 // No space left in the task queue add it back to the scheduledTaskQueue so we pick it up again.
                 scheduledTaskQueue.add((ScheduledFutureTask<?>) scheduledTask);
                 return false; //没有放成功
@@ -337,7 +337,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         return taskQueue.size();
     }
 
-    /**
+    /** 将任务添加到任务队列，如果此实例之前已关闭，则抛出{@link RejectedExecutionException}。
      * Add a task to the task queue, or throws a {@link RejectedExecutionException} if this instance was shutdown
      * before.
      */
@@ -352,7 +352,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         if (isShutdown()) {
             reject();
         }
-        return taskQueue.offer(task);
+        return taskQueue.offer(task); // 给taskQueue添加一个task
     }
 
     /**
@@ -453,15 +453,15 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         return true;
     }
 
-    /** 带超时的执行任务
+    /** 带超时的执行任务（执行时间不能超过传入的时间）
      * Poll all tasks from the task queue and run them via {@link Runnable#run()} method.  This method stops running
      * the tasks in the task queue and returns if it ran longer than {@code timeoutNanos}.
      */
     protected boolean runAllTasks(long timeoutNanos) {
-        fetchFromScheduledTaskQueue(); // 先获取要调度的任务，放入任务队列
-        Runnable task = pollTask(); // 获取任务队列的任务
-        if (task == null) {
-            afterRunningAllTasks(); //处理任务后，去执行tailTasks的任务
+        fetchFromScheduledTaskQueue(); // 先获取要调度的任务（也就是到期的定时任务），放入普通任务队列
+        Runnable task = pollTask(); // 获取任务队列中的任务
+        if (task == null) { // 如果没有任务，则直接返回
+            afterRunningAllTasks(); //处理任务后，去执行tailTasks的任务 （执行尾部的任务）
             return false;
         }
         // 截至时间: 已经花费调度任务的时间+超时时间(ScheduledFutureTask.nanoTime()表示从开始到现在执行任务持续的时间)
@@ -469,10 +469,10 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         long runTasks = 0; //统计任务数
         long lastExecutionTime; //持续执行的时间
         for (;;) {
-            safeExecute(task); // 执行任务(执行获取的任务)
+            safeExecute(task); // 执行任务，发生异常不终止任务，只是打一个日志(执行获取的任务)
 
-            runTasks ++; // 执行的任务数量+1
-            // 每个64个任务检查一次是否超时，因为nanoTime()方法也是一个相对昂贵的操作。
+            runTasks ++; // 执行完的任务数量+1
+            // 每经过64个任务检查一次是否超时，因为nanoTime()方法也是一个相对昂贵的操作。（如果当前时间超过截止时间了，则不执行了）
             // Check timeout every 64 tasks because nanoTime() is relatively expensive.
             // XXX: Hard-coded value - will make it configurable if it is really a problem. 每隔64个任务检查一次超时，因为nanoTime（）相对昂贵。 XXX：硬编码值-如果确实有问题，将使其可配置。
             if ((runTasks & 0x3F) == 0) { // 到64个任务 0x3F=0x00111111 位与==0 肯定到64了，单线程，不会有线程安全问题，不过为什么不直接写==64呢？
@@ -484,13 +484,13 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
             task = pollTask(); // 继续获取任务( 取下一个任务，继续处理)
             if (task == null) {
-                lastExecutionTime = ScheduledFutureTask.nanoTime();
+                lastExecutionTime = ScheduledFutureTask.nanoTime(); // 记录上次的执行时间
                 break;
             }
         }
 
         afterRunningAllTasks(); // 执行尾部的任务(预留的扩展方法。)
-        this.lastExecutionTime = lastExecutionTime; //保存持续执行任务的时间
+        this.lastExecutionTime = lastExecutionTime; //保存上次执行任务的时间
         return true;
     }
 
@@ -984,7 +984,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                 }
 
                 boolean success = false;
-                updateLastExecutionTime();
+                updateLastExecutionTime(); // 更新最新执行时间
                 try {
                     SingleThreadEventExecutor.this.run();
                     success = true;

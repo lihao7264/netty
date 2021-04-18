@@ -20,11 +20,11 @@ import java.util.AbstractSet;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-
+// 是个单线程使用的类（底层基于数组进行实现）
 final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
 
     SelectionKey[] keys; // key集合 (使用数组代替原Selector的中的HashSet,提高性能)
-    int size;
+    int size; // 大小
 
     SelectedSelectionKeySet() {
         keys = new SelectionKey[1024]; // 默认1024大小的数组
@@ -36,9 +36,9 @@ final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
             return false;
         }
 
-        keys[size++] = o;
+        keys[size++] = o; // 赋值，然后大小+1
         if (size == keys.length) {
-            increaseCapacity();
+            increaseCapacity(); // 扩容
         }
 
         return true;
@@ -46,12 +46,12 @@ final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
 
     @Override
     public boolean remove(Object o) {
-        return false;
+        return false; // 不支持remove操作
     }
 
     @Override
     public boolean contains(Object o) {
-        return false;
+        return false; // 不支持contains操作
     }
 
     @Override
@@ -78,7 +78,7 @@ final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
             }
 
             @Override
-            public void remove() {
+            public void remove() { // 不支持迭代器的remove操作
                 throw new UnsupportedOperationException();
             }
         };

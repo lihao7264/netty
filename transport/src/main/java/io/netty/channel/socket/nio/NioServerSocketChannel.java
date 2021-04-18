@@ -118,7 +118,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
     }
 
     @Override
-    protected ServerSocketChannel javaChannel() {
+    protected ServerSocketChannel javaChannel() { // 获取服务端启动过程中创建的ServerSocketChannel
         return (ServerSocketChannel) super.javaChannel();
     }
 
@@ -143,12 +143,12 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
     }
 
     @Override
-    protected int doReadMessages(List<Object> buf) throws Exception {
-        SocketChannel ch = SocketUtils.accept(javaChannel()); // channel的accept
+    protected int doReadMessages(List<Object> buf) throws Exception { // 服务端的该方法其实就是 doAcceptChannels
+        SocketChannel ch = SocketUtils.accept(javaChannel()); // ServerSocketChannel的accept，获取到一个连接的SocketChannel
 
         try {
-            if (ch != null) {
-                buf.add(new NioSocketChannel(this, ch)); // 把 NIO的channel 封装成 Netty的channel
+            if (ch != null) { // this为服务端的channel、ch为客户端的jdk channel（SocketChannel）
+                buf.add(new NioSocketChannel(this, ch)); // 把 NIO的channel（SocketChannel） 封装成 Netty的channel（NioSocketChannel），放入buf（也就是一个容器）中
                 return 1;
             }
         } catch (Throwable t) {
@@ -161,7 +161,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
             }
         }
 
-        return 0;
+        return 0; // 没有读取到连接，就直接返回0
     }
 
     // Unnecessary stuff

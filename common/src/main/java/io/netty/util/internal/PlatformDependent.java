@@ -989,8 +989,8 @@ public final class PlatformDependent {
      * consumer (one thread!).
      * @return A MPSC queue which may be unbounded.
      */
-    public static <T> Queue<T> newMpscQueue() {
-        return Mpsc.newMpscQueue();
+    public static <T> Queue<T> newMpscQueue() { // 创建 multi-producer single-consumer Queue
+        return Mpsc.newMpscQueue(); //  multi-producer 对应的就是外部线程（有很多），single-consumer就是Netty NioEventLoop的线程（仅有一个）
     }
 
     /**

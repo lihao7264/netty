@@ -59,7 +59,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
              *
              *  See <a href="https://github.com/netty/netty/issues/2308">#2308</a>.
              */
-            return provider.openServerSocketChannel();
+            return provider.openServerSocketChannel(); // 创建jdk的ServerSocketChannel
         } catch (IOException e) {
             throw new ChannelException(
                     "Failed to open a server socket.", e);
@@ -85,9 +85,9 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
     /**
      * Create a new instance using the given {@link ServerSocketChannel}.
      */
-    public NioServerSocketChannel(ServerSocketChannel channel) {
+    public NioServerSocketChannel(ServerSocketChannel channel) { // javaChannel()就是获取jdk的ServerSocketChannel
         super(null, channel, SelectionKey.OP_ACCEPT); // 调用父 AbstractNioMessageChannel 的构造方法。(传入的 SelectionKey 的值为 OP_ACCEPT 。) ---  AbstractNioMessageChannel 是 SelectionKey.OP_ACCEPT
-        config = new NioServerSocketChannelConfig(this, javaChannel().socket()); // 初始化 config 属性，创建 NioServerSocketChannelConfig 对象。
+        config = new NioServerSocketChannelConfig(this, javaChannel().socket()); // 初始化 config 属性，创建 NioServerSocketChannelConfig 对象。（tcp参数配置类，其实就是ServerSocket配置的抽象）
     }
 
     @Override
@@ -129,7 +129,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
     //  绑定 Channel 的端口。 （服务端的 Java 原生 NIO ServerSocketChannel 终于绑定端口）
     @SuppressJava6Requirement(reason = "Usage guarded by java version check")
     @Override
-    protected void doBind(SocketAddress localAddress) throws Exception {
+    protected void doBind(SocketAddress localAddress) throws Exception { // 调用jdk底层channel进行端口绑定
         if (PlatformDependent.javaVersion() >= 7) {
             javaChannel().bind(localAddress, config.getBacklog()); // java.nio.channels.NetworkChannel类出现之后才能使用该方法
         } else {
@@ -144,11 +144,11 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
 
     @Override
     protected int doReadMessages(List<Object> buf) throws Exception {
-        SocketChannel ch = SocketUtils.accept(javaChannel());
+        SocketChannel ch = SocketUtils.accept(javaChannel()); // channel的accept
 
         try {
             if (ch != null) {
-                buf.add(new NioSocketChannel(this, ch));
+                buf.add(new NioSocketChannel(this, ch)); // 把 NIO的channel 封装成 Netty的channel
                 return 1;
             }
         } catch (Throwable t) {

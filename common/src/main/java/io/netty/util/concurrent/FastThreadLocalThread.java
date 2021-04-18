@@ -18,7 +18,7 @@ package io.netty.util.concurrent;
 import io.netty.util.internal.InternalThreadLocalMap;
 import io.netty.util.internal.UnstableApi;
 
-/**
+/** 一种特殊的{@link Thread}，可以快速访问{@link FastThreadLocal}变量。（主要是优化ThreadLocal相关操作，自己包装了一个ThreadLocalMap）
  * A special {@link Thread} that provides fast access to {@link FastThreadLocal} variables.
  */
 public class FastThreadLocalThread extends Thread {

@@ -29,7 +29,7 @@ import java.net.SocketAddress;
 
 /** 可以把 Netty Channel 和 Java 原生 Socket 对应，而 Netty NIO Channel 和 Java 原生 NIO SocketChannel 对象。
  * A nexus to a network socket or a component which is capable of I/O
- * operations such as read, write, connect, and bind.
+ * operations such as read, write, connect, and bind. 底层网络Socket的抽象（可以进行读写、连接、绑定等操作）
  * <p>
  * A channel provides a user:
  * <ul>
@@ -109,7 +109,7 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
      */
     boolean isRegistered();
 
-    /**
+    /** 如果{@link Channel}处于活动状态并已连接，则返回{@code true}。
      * Return {@code true} if the {@link Channel} is active and so connected.
      */
     boolean isActive();

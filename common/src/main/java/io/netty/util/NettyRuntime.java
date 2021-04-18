@@ -95,7 +95,7 @@ public final class NettyRuntime {
      * @return the configured number of available processors
      */
     public static int availableProcessors() {
-        return holder.availableProcessors();
+        return holder.availableProcessors(); // cpu核数
     }
 
     /**

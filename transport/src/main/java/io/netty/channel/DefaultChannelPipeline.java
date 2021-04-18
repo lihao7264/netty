@@ -89,7 +89,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
      */
     private boolean registered;
 
-    protected DefaultChannelPipeline(Channel channel) {
+    protected DefaultChannelPipeline(Channel channel) { // 初始化pipeline，把channel加入到逻辑链路中（pipeline）
         this.channel = ObjectUtil.checkNotNull(channel, "channel");
         succeededFuture = new SucceededChannelFuture(channel, null);
         voidPromise =  new VoidChannelPromise(channel, true);
@@ -641,7 +641,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         }
     }
 
-    final void invokeHandlerAddedIfNeeded() {
+    final void invokeHandlerAddedIfNeeded() { // 调用服务端启动过程中的handler的handlerAdded
         assert channel.eventLoop().inEventLoop();
         if (firstRegistration) {
             firstRegistration = false;
@@ -811,7 +811,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     @Override
-    public final ChannelPipeline fireChannelRegistered() {
+    public final ChannelPipeline fireChannelRegistered() { // 调用服务端启动过程中的handler的channelRegistered方法
         AbstractChannelHandlerContext.invokeChannelRegistered(head);
         return this;
     }
@@ -1001,7 +1001,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public final ChannelPipeline read() {
-        tail.read();
+        tail.read(); // pipeline中最尾部的节点
         return this;
     }
 
@@ -1397,7 +1397,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         public void channelActive(ChannelHandlerContext ctx) {
             ctx.fireChannelActive();
 
-            readIfIsAutoRead();
+            readIfIsAutoRead(); // 将之前注册到selector上事件，重新绑定为accept事件，有新连接进来，selector就会轮训到accept事件，就会将这个连接交给netty来处理
         }
 
         @Override
@@ -1419,7 +1419,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
         private void readIfIsAutoRead() {
             if (channel.config().isAutoRead()) {
-                channel.read();
+                channel.read(); // channel的read事件
             }
         }
 

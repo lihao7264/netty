@@ -36,7 +36,7 @@ public final class RejectedExecutionHandlers {
 
     /**
      * Returns a {@link RejectedExecutionHandler} that will always just throw a {@link RejectedExecutionException}.
-     */
+     */ // 返回一个{@link RejectedExecutionHandler}，它将始终只抛出一个{@link RejectedExecutionException}。
     public static RejectedExecutionHandler reject() {
         return REJECT;
     }

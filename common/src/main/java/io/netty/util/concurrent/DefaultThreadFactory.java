@@ -28,12 +28,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class DefaultThreadFactory implements ThreadFactory {
 
-    private static final AtomicInteger poolId = new AtomicInteger();
+    private static final AtomicInteger poolId = new AtomicInteger(); // 线程池id：每次创建NioEvnetLoopGroup，该字段就会自增1
 
-    private final AtomicInteger nextId = new AtomicInteger();
-    private final String prefix;
-    private final boolean daemon;
-    private final int priority;
+    private final AtomicInteger nextId = new AtomicInteger(); //  线程id：每次创建NioEvnetLoop，该字段就会自增1
+    private final String prefix; // 线程名称前缀
+    private final boolean daemon; // 是否是守护进程
+    private final int priority; // 线程优先级
     protected final ThreadGroup threadGroup;
 
     public DefaultThreadFactory(Class<?> poolType) {
@@ -45,7 +45,7 @@ public class DefaultThreadFactory implements ThreadFactory {
     }
 
     public DefaultThreadFactory(Class<?> poolType, boolean daemon) {
-        this(poolType, daemon, Thread.NORM_PRIORITY);
+        this(poolType, daemon, Thread.NORM_PRIORITY); // 分配给线程的默认优先级。
     }
 
     public DefaultThreadFactory(String poolName, boolean daemon) {
@@ -60,21 +60,21 @@ public class DefaultThreadFactory implements ThreadFactory {
         this(poolName, false, priority);
     }
 
-    public DefaultThreadFactory(Class<?> poolType, boolean daemon, int priority) {
+    public DefaultThreadFactory(Class<?> poolType, boolean daemon, int priority) {// 类名、是否是守护线程、优先级
         this(toPoolName(poolType), daemon, priority);
     }
 
-    public static String toPoolName(Class<?> poolType) {
+    public static String toPoolName(Class<?> poolType) {// 将类名转化为线程池的名字
         ObjectUtil.checkNotNull(poolType, "poolType");
 
-        String poolName = StringUtil.simpleClassName(poolType);
+        String poolName = StringUtil.simpleClassName(poolType); // 拿到简单的类型，比如NioEventLoop
         switch (poolName.length()) {
             case 0:
                 return "unknown";
             case 1:
                 return poolName.toLowerCase(Locale.US);
             default:
-                if (Character.isUpperCase(poolName.charAt(0)) && Character.isLowerCase(poolName.charAt(1))) {
+                if (Character.isUpperCase(poolName.charAt(0)) && Character.isLowerCase(poolName.charAt(1))) {// 如果首字母大写，并且第二个字母为小写，则首字母转为小写
                     return Character.toLowerCase(poolName.charAt(0)) + poolName.substring(1);
                 } else {
                     return poolName;
@@ -90,7 +90,7 @@ public class DefaultThreadFactory implements ThreadFactory {
                     "priority: " + priority + " (expected: Thread.MIN_PRIORITY <= priority <= Thread.MAX_PRIORITY)");
         }
 
-        prefix = poolName + '-' + poolId.incrementAndGet() + '-';
+        prefix = poolName + '-' + poolId.incrementAndGet() + '-'; // 名字前缀= 类名（nioEventLoop）+ '-' + 线程池id + '-'
         this.daemon = daemon;
         this.priority = priority;
         this.threadGroup = threadGroup;
@@ -102,13 +102,13 @@ public class DefaultThreadFactory implements ThreadFactory {
 
     @Override
     public Thread newThread(Runnable r) {
-        Thread t = newThread(FastThreadLocalRunnable.wrap(r), prefix + nextId.incrementAndGet());
+        Thread t = newThread(FastThreadLocalRunnable.wrap(r), prefix + nextId.incrementAndGet()); // 线程名字= 类名（nioEventLoop）+ '-' + 线程池id + '-'+线程id
         try {
-            if (t.isDaemon() != daemon) {
+            if (t.isDaemon() != daemon) { // 修改是否是守护线程
                 t.setDaemon(daemon);
             }
 
-            if (t.getPriority() != priority) {
+            if (t.getPriority() != priority) { // 修改线程优先级
                 t.setPriority(priority);
             }
         } catch (Exception ignored) {
@@ -118,6 +118,6 @@ public class DefaultThreadFactory implements ThreadFactory {
     }
 
     protected Thread newThread(Runnable r, String name) {
-        return new FastThreadLocalThread(threadGroup, r, name);
+        return new FastThreadLocalThread(threadGroup, r, name); // 创建一个 FastThreadLocalThread
     }
 }

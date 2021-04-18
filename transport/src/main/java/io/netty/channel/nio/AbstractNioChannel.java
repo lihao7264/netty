@@ -78,7 +78,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
      */
     protected AbstractNioChannel(Channel parent, SelectableChannel ch, int readInterestOp) {
         super(parent); // 调用父 AbstractNioChannel 的构造方法。
-        this.ch = ch;  // 设置Netty NIO Channel 对象，持有的 Java 原生 NIO 的 Channel 对象。
+        this.ch = ch;  // 设置Netty NIO Channel 对象，持有的 Java 原生 NIO 的 Channel 对象。（jdk底层的Channel）
         this.readInterestOp = readInterestOp; // 感兴趣的读事件的操作位值。
         try {
             ch.configureBlocking(false); // 设置 NIO Channel 为非阻塞。
@@ -197,7 +197,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         SelectableChannel ch();
 
         /**
-         * Finish connect
+         * Finish connect 完成连接
          */
         void finishConnect();
 
@@ -326,12 +326,12 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         public final void finishConnect() {
             // Note this method is invoked by the event loop only if the connection attempt was
             // neither cancelled nor timed out.
-
+            // 注意:只有在连接尝试既未取消也未超时的情况下，事件循环才调用此方法。
             assert eventLoop().inEventLoop();
 
             try {
-                boolean wasActive = isActive();
-                doFinishConnect();
+                boolean wasActive = isActive(); // 是否处于活动状态并已连接
+                doFinishConnect(); // 完成连接
                 fulfillConnectPromise(connectPromise, wasActive);
             } catch (Throwable t) {
                 fulfillConnectPromise(connectPromise, annotateConnectException(t, requestedRemoteAddress));
@@ -376,7 +376,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
     protected void doRegister() throws Exception {
         boolean selected = false;
         for (;;) {
-            try {
+            try { // jdk 底层的channel 注册到selector上（关心的事件为0，不关心任何事件），将当前netty的channel 做attachment 绑定到selector上去
                 selectionKey = javaChannel().register(eventLoop().unwrappedSelector(), 0, this); // 注册 Java 原生 NIO 的 Channel 对象到 Selector 对象上。(感兴趣的事件是为 0 )
                 return;
             } catch (CancelledKeyException e) {
@@ -402,16 +402,16 @@ public abstract class AbstractNioChannel extends AbstractChannel {
     @Override
     protected void doBeginRead() throws Exception {
         // Channel.read() or ChannelHandlerContext.read() was called
-        final SelectionKey selectionKey = this.selectionKey;
+        final SelectionKey selectionKey = this.selectionKey; // 注册服务端channel到selector上返回的selectionKey
         if (!selectionKey.isValid()) {
             return;
         }
 
         readPending = true;
         // 将创建 NioServerSocketChannel 时，设置的 readInterestOp = SelectionKey.OP_ACCEPT 添加为感兴趣的事件。(服务端可以开始处理客户端的连接事件。)
-        final int interestOps = selectionKey.interestOps();
-        if ((interestOps & readInterestOp) == 0) {
-            selectionKey.interestOps(interestOps | readInterestOp);
+        final int interestOps = selectionKey.interestOps(); // 获取selectionKey上的感兴趣的事件。（在服务端启动过程中，这里返回的会是0）
+        if ((interestOps & readInterestOp) == 0) {// 条件成立
+            selectionKey.interestOps(interestOps | readInterestOp); // 增加一个事件（服务端启动过程中，readInterestOp = SelectionKey.OP_ACCEPT）
         }
     }
 

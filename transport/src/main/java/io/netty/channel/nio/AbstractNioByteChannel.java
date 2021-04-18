@@ -36,8 +36,8 @@ import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 
 import static io.netty.channel.internal.ChannelUtils.WRITE_STATUS_SNDBUF_FULL;
-
-/**
+// NioSocketChannel -> AbstractNioByteChannel -> AbstractNioChannel -> AbstractChannel   NioSocketChannel 是给客户端用的，每个连接生成一个NioSocketChannel 对象
+/** {@link AbstractNioChannel}基类，用于按字节操作的{@link Channel}。（对应客户端Channel数据流的读写）
  * {@link AbstractNioChannel} base class for {@link Channel}s that operate on bytes.
  */
 public abstract class AbstractNioByteChannel extends AbstractNioChannel {

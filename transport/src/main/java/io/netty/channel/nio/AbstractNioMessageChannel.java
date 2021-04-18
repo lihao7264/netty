@@ -28,8 +28,8 @@ import java.nio.channels.SelectableChannel;
 import java.nio.channels.SelectionKey;
 import java.util.ArrayList;
 import java.util.List;
-
-/**
+// NioServerSocketChannel -> AbstractNioMessageChannel-> AbstractNioChannel -> AbstractChannel  NioServerSocketChannel 是给server用的，程序由始至终只有一个NioServerSocketChannel
+/** {@link AbstractNioChannel}基类，用于对消息进行操作的{@link Channel}。（对应是否有新连接进来的情况）
  * {@link AbstractNioChannel} base class for {@link Channel}s that operate on messages.
  */
 public abstract class AbstractNioMessageChannel extends AbstractNioChannel {

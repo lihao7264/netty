@@ -87,7 +87,7 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
     }
 
     public NioEventLoopGroup(
-            int nThreads, Executor executor, final SelectorProvider selectorProvider) {
+            int nThreads, Executor executor, final SelectorProvider selectorProvider) {// selectorProvider用于创建每个NioEventLoop维护的selector
         this(nThreads, executor, selectorProvider, DefaultSelectStrategyFactory.INSTANCE);
     }
 
@@ -140,8 +140,8 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
     }
 
     @Override
-    protected EventLoop newChild(Executor executor, Object... args) throws Exception {
-        EventLoopTaskQueueFactory queueFactory = args.length == 4 ? (EventLoopTaskQueueFactory) args[3] : null;
+    protected EventLoop newChild(Executor executor, Object... args) throws Exception { // 保存线程执行器、创建一个任务队列（多个生产者、一个消费者）、创建一个selector（轮训注册上来的连接）
+        EventLoopTaskQueueFactory queueFactory = args.length == 4 ? (EventLoopTaskQueueFactory) args[3] : null; // new NioEventLoopGroup的时候参数只有3个
         return new NioEventLoop(this, executor, (SelectorProvider) args[0],
             ((SelectStrategyFactory) args[1]).newSelectStrategy(), (RejectedExecutionHandler) args[2], queueFactory);
     }

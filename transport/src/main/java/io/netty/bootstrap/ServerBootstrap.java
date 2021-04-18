@@ -126,33 +126,33 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         this.childHandler = ObjectUtil.checkNotNull(childHandler, "childHandler");
         return this;
     }
-    // 初始化 Channel 配置。
+    // 初始化 Channel 配置。（入参为ServerSocketChannel）
     @Override
-    void init(Channel channel) {
+    void init(Channel channel) { // 1、配置用户自定义的ChannelOptions、ChannelAttrs
         setChannelOptions(channel, newOptionsArray(), logger); // // 初始化 Channel 的可选项集合 (将启动器配置的可选项集合)
         setAttributes(channel, newAttributesArray());  // 初始化 Channel 的属性集合
-
+        // 拿到服务端的pipeline
         ChannelPipeline p = channel.pipeline();
-        // 记录当前的属性 (记录启动器配置的子 Channel的属性，)
+        // 记录当前的属性 (记录启动器配置的子 Channel的属性)
         final EventLoopGroup currentChildGroup = childGroup;
         final ChannelHandler currentChildHandler = childHandler;
-        final Entry<ChannelOption<?>, Object>[] currentChildOptions = newOptionsArray(childOptions);
-        final Entry<AttributeKey<?>, Object>[] currentChildAttrs = newAttributesArray(childAttrs);
+        final Entry<ChannelOption<?>, Object>[] currentChildOptions = newOptionsArray(childOptions); // 为通过服务端Channel创建出来的新连接的channel创建的
+        final Entry<AttributeKey<?>, Object>[] currentChildAttrs = newAttributesArray(childAttrs); // 为通过服务端Channel创建出来的新连接的channel创建的
         // 添加 ChannelInitializer 对象到 pipeline 中，用于后续初始化 ChannelHandler 到 pipeline 中。
         p.addLast(new ChannelInitializer<Channel>() {
             @Override
             public void initChannel(final Channel ch) { // 从 io.netty.channel.DefaultChannelPipeline.invokeHandlerAddedIfNeeded 进入执行
                 final ChannelPipeline pipeline = ch.pipeline();
-                ChannelHandler handler = config.handler(); // 添加启动器配置的 ChannelHandler 到 pipeline 中。
+                ChannelHandler handler = config.handler(); // 添加启动器配置的 ChannelHandler 到 pipeline 中。（配置服务端pipeline）
                 if (handler != null) {
-                    pipeline.addLast(handler);
+                    pipeline.addLast(handler); // 用户自定义的服务端启动过程中执行的处理器添加到处理链中
                 }
                 // 添加 ServerBootstrapAcceptor 到 pipeline 中。(使用 EventLoop 执行的原因，参见 https://github.com/lightningMan/netty/commit/4638df20628a8987c8709f0f8e5f3679a914ce1a)
                 ch.eventLoop().execute(new Runnable() { // 为什么使用 EventLoop 执行添加的过程？ 如果启动器配置的处理器，并且 ServerBootstrapAcceptor 不使用 EventLoop 添加，则会导致 ServerBootstrapAcceptor 添加到配置的处理器之前。
                     @Override
                     public void run() {
                         pipeline.addLast(new ServerBootstrapAcceptor( // ServerBootstrapAcceptor 也是一个 ChannelHandler 实现类，用于接受客户端的连接请求。
-                                ch, currentChildGroup, currentChildHandler, currentChildOptions, currentChildAttrs)); // 创建 ServerBootstrapAcceptor 对象。
+                                ch, currentChildGroup, currentChildHandler, currentChildOptions, currentChildAttrs)); // 创建 ServerBootstrapAcceptor 对象(连接器)。 （ServerBootstrapAcceptor作用就是给accept到的新连接分配一个NIO的线程）
                     }
                 });
             }
@@ -171,13 +171,13 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         }
         return this;
     }
-
+    // 这是一个特殊的ChannelHandler
     private static class ServerBootstrapAcceptor extends ChannelInboundHandlerAdapter {
 
-        private final EventLoopGroup childGroup;
-        private final ChannelHandler childHandler;
-        private final Entry<ChannelOption<?>, Object>[] childOptions;
-        private final Entry<AttributeKey<?>, Object>[] childAttrs;
+        private final EventLoopGroup childGroup; // 用户自定义的childGroup（创建 worker 线程组 用于进行 SocketChannel 的数据读写）
+        private final ChannelHandler childHandler; // 用户自定义的childHandler（通过io.netty.bootstrap.ServerBootstrap.childHandler(io.netty.channel.ChannelHandler)添加）
+        private final Entry<ChannelOption<?>, Object>[] childOptions; // 用户自定义的childOptions
+        private final Entry<AttributeKey<?>, Object>[] childAttrs; // 用户自定义的childAttrs
         private final Runnable enableAutoReadTask;
 
         ServerBootstrapAcceptor(

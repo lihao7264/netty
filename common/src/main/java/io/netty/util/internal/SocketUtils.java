@@ -116,7 +116,7 @@ public final class SocketUtils {
             return AccessController.doPrivileged(new PrivilegedExceptionAction<SocketChannel>() {
                 @Override
                 public SocketChannel run() throws IOException {
-                    return serverSocketChannel.accept();
+                    return serverSocketChannel.accept(); // NIO底层的 ServerSocketChannel 接受连接
                 }
             });
         } catch (PrivilegedActionException e) {

@@ -41,9 +41,9 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
    static final Runnable WAKEUP_TASK = new Runnable() {
        @Override
        public void run() { } // Do nothing
-    };
+    }; // 就是个空任务，也就是唤醒任务,什么都不做（作为特殊的唤醒任务而已，用来唤醒线程）
 
-    PriorityQueue<ScheduledFutureTask<?>> scheduledTaskQueue;
+    PriorityQueue<ScheduledFutureTask<?>> scheduledTaskQueue; // NioEventLoop下的定时队列（按照任务的截止时间正序排序的队列）---- 存放的是定时任务
 
     long nextTaskId;
 
@@ -90,15 +90,15 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
         return queue == null || queue.isEmpty();
     }
 
-    /**
+    /** 取消所有定时的任务。
      * Cancel all scheduled tasks.
-     *
+     * 仅当{@link #inEventLoop（）}为{@code true}时，才必须调用此方法
      * This method MUST be called only when {@link #inEventLoop()} is {@code true}.
      */
     protected void cancelScheduledTasks() {
         assert inEventLoop();
-        PriorityQueue<ScheduledFutureTask<?>> scheduledTaskQueue = this.scheduledTaskQueue;
-        if (isNullOrEmpty(scheduledTaskQueue)) {
+        PriorityQueue<ScheduledFutureTask<?>> scheduledTaskQueue = this.scheduledTaskQueue; // 定时任务队列
+        if (isNullOrEmpty(scheduledTaskQueue)) { // 如果为空，则直接返回
             return;
         }
 
@@ -106,7 +106,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
                 scheduledTaskQueue.toArray(new ScheduledFutureTask<?>[0]);
 
         for (ScheduledFutureTask<?> task: scheduledTasks) {
-            task.cancelWithoutRemove(false);
+            task.cancelWithoutRemove(false); // 取消不删除 任务
         }
 
         scheduledTaskQueue.clearIgnoringIndexes();
@@ -119,19 +119,19 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
         return pollScheduledTask(nanoTime());
     }
 
-    /**
+    /** 返回准备使用给定的{@code nanoTime}内执行的{@link Runnable}。您应该使用{@link #nanoTime（）}来检索正确的{@code nanoTime}。
      * Return the {@link Runnable} which is ready to be executed with the given {@code nanoTime}.
      * You should use {@link #nanoTime()} to retrieve the correct {@code nanoTime}.
      */
-    protected final Runnable pollScheduledTask(long nanoTime) {
+    protected final Runnable pollScheduledTask(long nanoTime) { // 可调度意味着延迟时间已经到了，才可以执行
         assert inEventLoop();
 
-        ScheduledFutureTask<?> scheduledTask = peekScheduledTask();
-        if (scheduledTask == null || scheduledTask.deadlineNanos() - nanoTime > 0) {
+        ScheduledFutureTask<?> scheduledTask = peekScheduledTask(); // 获取一个定时任务
+        if (scheduledTask == null || scheduledTask.deadlineNanos() - nanoTime > 0) {// 没有任务或者延迟的时间还没到
             return null;
         }
-        scheduledTaskQueue.remove();
-        scheduledTask.setConsumed();
+        scheduledTaskQueue.remove(); //从延迟任务队列中删除
+        scheduledTask.setConsumed(); //设置没延迟了
         return scheduledTask;
     }
 
@@ -146,10 +146,10 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
     /**
      * Return the deadline (in nanoseconds) when the next scheduled task is ready to be run or {@code -1}
      * if no task is scheduled.
-     */
-    protected final long nextScheduledTaskDeadlineNanos() {
+     */ // 计算延迟任务队列中第一个任务的到期执行时间（即最晚还能延迟多长时间执行），没有任务则返回-1
+    protected final long nextScheduledTaskDeadlineNanos() {  // 获取定时任务队列第一个任务的截止时间
         ScheduledFutureTask<?> scheduledTask = peekScheduledTask();
-        return scheduledTask != null ? scheduledTask.deadlineNanos() : -1;
+        return scheduledTask != null ? scheduledTask.deadlineNanos() : -1; // 获取定时任务队列第一个任务的截止时间
     }
 
     final ScheduledFutureTask<?> peekScheduledTask() {

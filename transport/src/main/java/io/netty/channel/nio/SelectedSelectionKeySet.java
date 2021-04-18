@@ -23,11 +23,11 @@ import java.util.NoSuchElementException;
 
 final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
 
-    SelectionKey[] keys;
+    SelectionKey[] keys; // key集合 (使用数组代替原Selector的中的HashSet,提高性能)
     int size;
 
     SelectedSelectionKeySet() {
-        keys = new SelectionKey[1024];
+        keys = new SelectionKey[1024]; // 默认1024大小的数组
     }
 
     @Override
@@ -93,7 +93,7 @@ final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
         size = 0;
     }
 
-    private void increaseCapacity() {
+    private void increaseCapacity() { // 不够用时扩展为原大小的2倍。
         SelectionKey[] newKeys = new SelectionKey[keys.length << 1];
         System.arraycopy(keys, 0, newKeys, 0, size);
         keys = newKeys;

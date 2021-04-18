@@ -37,7 +37,7 @@ import java.nio.channels.NotYetConnectedException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 
-/**
+/** 对Channel的抽象
  * A skeletal {@link Channel} implementation.
  */
 public abstract class AbstractChannel extends DefaultAttributeMap implements Channel {
@@ -45,15 +45,15 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(AbstractChannel.class);
 
     private final Channel parent;  //  父 Channel 对象(对于 NioServerSocketChannel 的 parent 为空。)
-    private final ChannelId id;  //  Channel 编号
-    private final Unsafe unsafe; //  Unsafe 对象(io.netty.channel.Channel#Unsafe)
+    private final ChannelId id;  //  Channel 编号（每个Channel的唯一标识）
+    private final Unsafe unsafe; //  Unsafe 对象(io.netty.channel.Channel#Unsafe) --- 跟tcp相关的读写
     private final DefaultChannelPipeline pipeline; // DefaultChannelPipeline 对象
     private final VoidChannelPromise unsafeVoidPromise = new VoidChannelPromise(this, false);
     private final CloseFuture closeFuture = new CloseFuture(this);
 
     private volatile SocketAddress localAddress;
     private volatile SocketAddress remoteAddress;
-    private volatile EventLoop eventLoop;
+    private volatile EventLoop eventLoop; // 绑定线程（也就是 接受连接的线程组 ） --- bossGroup
     private volatile boolean registered;  // 是否注册(registered 变量声明在 AbstractChannel 中)
     private boolean closeInitiated;
     private Throwable initialCloseCause;
@@ -72,7 +72,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
         this.parent = parent;
         id = newId();  // 创建 ChannelId 对象
         unsafe = newUnsafe();  // 创建 Unsafe 对象
-        pipeline = newChannelPipeline();  // 创建 DefaultChannelPipeline 对象
+        pipeline = newChannelPipeline();  // 创建 DefaultChannelPipeline 对象（逻辑链）
     }
 
     /**
@@ -474,7 +474,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
             //  设置 Channel 的 eventLoop 属性
-            AbstractChannel.this.eventLoop = eventLoop;
+            AbstractChannel.this.eventLoop = eventLoop; // 绑定线程（也就是 接受连接的线程组 ）
             // 在 EventLoop 中执行注册逻辑
             if (eventLoop.inEventLoop()) {
                 register0(promise);
@@ -497,7 +497,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             }
         }
 
-        private void register0(ChannelPromise promise) { // 注册逻辑。
+        private void register0(ChannelPromise promise) { // 实际注册逻辑。
             try {
                 // check if the channel is still open as it could be closed in the mean time when the register
                 // call was outside of the eventLoop
@@ -505,19 +505,19 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                     return;
                 }
                 boolean firstRegistration = neverRegistered;  // 记录是否为首次注册（neverRegistered 变量声明在 AbstractChannel 中，）
-                doRegister(); // 执行注册逻辑
+                doRegister(); // 执行注册逻辑（调用jdk底层注册）--- jdk的channel注册到selector上
                 neverRegistered = false;  // 标记首次注册为 false
                 registered = true;  // 标记 Channel 为已注册
 
                 // Ensure we call handlerAdded(...) before we actually notify the promise. This is needed as the
                 // user may already fire events through the pipeline in the ChannelFutureListener.
-                pipeline.invokeHandlerAddedIfNeeded(); // 触发 ChannelInitializer 执行，进行 Handler 初始化。
+                pipeline.invokeHandlerAddedIfNeeded(); // 触发 ChannelInitializer 执行，进行 Handler 初始化。（添加一些channelHandler到Channel上的时候，就会触发到用户的回调）
 
-                safeSetSuccess(promise);  // 回调通知 `promise` 执行成功（）
-                pipeline.fireChannelRegistered();  // 触发通知已注册事件
+                safeSetSuccess(promise);  // 回调通知 `promise` 执行成功
+                pipeline.fireChannelRegistered();  // 触发通知已注册事件（传播channel注册成功的事件）
                 // Only fire a channelActive if the channel has never been registered. This prevents firing
                 // multiple channel actives if the channel is deregistered and re-registered.
-                if (isActive()) {
+                if (isActive()) { // 启动的时候，这里返回的都是false
                     if (firstRegistration) {
                         pipeline.fireChannelActive();
                     } else if (config().isAutoRead()) {
@@ -556,20 +556,20 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                         "is not bound to a wildcard address; binding to a non-wildcard " +
                         "address (" + localAddress + ") anyway as requested.");
             }
-           // 记录 Channel 是否激活(此时，一般返回的是 false 。)
+           // 记录 Channel 是否激活(此时，一般返回的是 false 。) --- 端口绑定之前isActive()返回false，端口绑定之后isActive()返回true
             boolean wasActive = isActive();
             try {
-                doBind(localAddress);  // 绑定 Channel 的端口
+                doBind(localAddress);  // 绑定 Channel 的端口（jdk底层的端口绑定）
             } catch (Throwable t) {
                 safeSetFailure(promise, t);
                 closeIfClosed();
                 return;
             }
             // 若 Channel 是新激活的，触发通知 Channel 已激活的事件。（此时，一般返回true）
-            if (!wasActive && isActive()) {
+            if (!wasActive && isActive()) {// 第一次绑定成功，触发
                 invokeLater(new Runnable() { //调用 #invokeLater(Runnable task) 方法，提交任务
                     @Override
-                    public void run() {
+                    public void run() {// 传播channelActive事件
                         pipeline.fireChannelActive(); // 触发 Channel 激活的事件
                     }
                 });

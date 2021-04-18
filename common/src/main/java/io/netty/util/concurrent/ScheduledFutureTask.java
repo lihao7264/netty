@@ -25,14 +25,14 @@ import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("ComparableImplementedButEqualsNotOverridden")
 final class ScheduledFutureTask<V> extends PromiseTask<V> implements ScheduledFuture<V>, PriorityQueueNode {
-    private static final long START_TIME = System.nanoTime();
+    private static final long START_TIME = System.nanoTime(); // NioEventLoopGroup初始化的时间
 
     static long nanoTime() {
-        return System.nanoTime() - START_TIME;
+        return System.nanoTime() - START_TIME; // 从开始(NioEventLoopGroup初始化的时间)到现在执行任务的时间，也就是持续执行任务的时间
     }
 
     static long deadlineNanos(long delay) {
-        long deadlineNanos = nanoTime() + delay;
+        long deadlineNanos = nanoTime() + delay; //
         // Guard against overflow
         return deadlineNanos < 0 ? Long.MAX_VALUE : deadlineNanos;
     }

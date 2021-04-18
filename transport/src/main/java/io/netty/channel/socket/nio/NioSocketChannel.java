@@ -123,8 +123,8 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
 
     @Override
     public boolean isActive() {
-        SocketChannel ch = javaChannel();
-        return ch.isOpen() && ch.isConnected();
+        SocketChannel ch = javaChannel(); // 获得jdk的SocketChannel
+        return ch.isOpen() && ch.isConnected(); // SocketChannel是否打开且被连接
     }
 
     @Override

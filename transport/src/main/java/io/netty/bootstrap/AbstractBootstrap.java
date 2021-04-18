@@ -56,7 +56,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     @SuppressWarnings("unchecked")
     private static final Map.Entry<AttributeKey<?>, Object>[] EMPTY_ATTRIBUTE_ARRAY = new Map.Entry[0];
 
-    volatile EventLoopGroup group; // EventLoopGroup 对象
+    volatile EventLoopGroup group; // EventLoopGroup 对象（创建 boss 线程组 用于接受连接）
     @SuppressWarnings("deprecation")
     private volatile ChannelFactory<? extends C> channelFactory; //  Channel 工厂:用于创建 Channel 对象。
     private volatile SocketAddress localAddress; // 本地地址
@@ -320,7 +320,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             return new DefaultChannelPromise(new FailedChannel(), GlobalEventExecutor.INSTANCE).setFailure(t);// 返回带异常的 DefaultChannelPromise 对象。(因为创建 Channel 对象失败，所以需要创建一个 FailedChannel 对象，设置到 DefaultChannelPromise 中才可以返回。)
         }
         // 注册 Channel 到 EventLoopGroup 中 (注册 Channel 到 EventLoopGroup 中。实际在方法内部，EventLoopGroup 会分配一个 EventLoop 对象，将 Channel 注册到其上。)
-        ChannelFuture regFuture = config().group().register(channel);
+        ChannelFuture regFuture = config().group().register(channel); // 通过接受连接的线程组注册channel
         if (regFuture.cause() != null) {
             if (channel.isRegistered()) {
                 channel.close(); // 若发生异常，并且 Channel 已经注册成功，则调用 #close() 方法，正常关闭 Channel 。
@@ -349,7 +349,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         // 在触发channelRegistered()之前调用此方法。 使用户处理程序有机会在其 channelRegistered() 实现中设置管道。
         // This method is invoked before channelRegistered() is triggered.  Give user handlers a chance to set up
         // the pipeline in its channelRegistered() implementation.
-        channel.eventLoop().execute(new Runnable() { // 调用 EventLoop 执行 Channel 的端口绑定逻辑。但是，实际上当前线程已经是 EventLoop 所在的线程了。
+        channel.eventLoop().execute(new Runnable() { // 调用 EventLoop(就是接收连接的线程) 执行 Channel 的端口绑定逻辑。但是，实际上当前线程已经是 EventLoop 所在的线程了。
             @Override
             public void run() {
                 if (regFuture.isSuccess()) { // 注册成功，绑定端口(执行 Channel 的端口绑定逻辑。)
@@ -385,7 +385,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
      */
     public abstract AbstractBootstrapConfig<B, C> config();
 
-    final Map.Entry<ChannelOption<?>, Object>[] newOptionsArray() {
+    final Map.Entry<ChannelOption<?>, Object>[] newOptionsArray() { // 拿到用户代码设置的options
         return newOptionsArray(options);
     }
 
@@ -395,7 +395,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         }
     }
 
-    final Map.Entry<AttributeKey<?>, Object>[] newAttributesArray() {
+    final Map.Entry<AttributeKey<?>, Object>[] newAttributesArray() { // 拿到用户代码设置的attrs
         return newAttributesArray(attrs0());
     }
 
@@ -445,7 +445,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         for (Map.Entry<AttributeKey<?>, Object> e: attrs) {
             @SuppressWarnings("unchecked")
             AttributeKey<Object> key = (AttributeKey<Object>) e.getKey();
-            channel.attr(key).set(e.getValue());
+            channel.attr(key).set(e.getValue()); // attrs绑定到Netty Channel上
         }
     }
     // #setChannelOptions(...) 静态方法，设置传入的 Channel 的多个可选项()
@@ -460,7 +460,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     private static void setChannelOption(
             Channel channel, ChannelOption<?> option, Object value, InternalLogger logger) {
         try {
-            if (!channel.config().setOption((ChannelOption<Object>) option, value)) {
+            if (!channel.config().setOption((ChannelOption<Object>) option, value)) { // 将options配置到tcp参数配置类中
                 logger.warn("Unknown channel option '{}' for channel '{}'", option, channel);
             }
         } catch (Throwable t) {

@@ -22,8 +22,8 @@ import java.nio.channels.spi.SelectorProvider;
 import java.util.Set;
 
 final class SelectedSelectionKeySetSelector extends Selector {
-    private final SelectedSelectionKeySet selectionKeys;
-    private final Selector delegate;
+    private final SelectedSelectionKeySet selectionKeys; // key
+    private final Selector delegate; // jvm的Selector
 
     SelectedSelectionKeySetSelector(Selector delegate, SelectedSelectionKeySet selectionKeys) {
         this.delegate = delegate;
@@ -52,7 +52,7 @@ final class SelectedSelectionKeySetSelector extends Selector {
 
     @Override
     public int selectNow() throws IOException {
-        selectionKeys.reset();
+        selectionKeys.reset(); // 清除SelectedSelectionKeySet
         return delegate.selectNow();
     }
 

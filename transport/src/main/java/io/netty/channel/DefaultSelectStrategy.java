@@ -24,9 +24,9 @@ final class DefaultSelectStrategy implements SelectStrategy {
     static final SelectStrategy INSTANCE = new DefaultSelectStrategy();
 
     private DefaultSelectStrategy() { }
-
-    @Override
+    //  如果当前存在待处理的任务，调用selector.selectNow()，这时会跳出switch语句，往下处理事件和任务，否则返回SelectStrategy.SELECT。
+    @Override // //获得策略的核心方法
     public int calculateStrategy(IntSupplier selectSupplier, boolean hasTasks) throws Exception {
-        return hasTasks ? selectSupplier.get() : SelectStrategy.SELECT;
+        return hasTasks ? selectSupplier.get() : SelectStrategy.SELECT; //  // 如果当前 NioEventLoop 有任务了，立即检查就绪selectNow，否则返回-1
     }
 }

@@ -156,12 +156,12 @@ public abstract class AbstractEventExecutor extends AbstractExecutorService impl
         throw new UnsupportedOperationException();
     }
 
-    /**
+    /** 尝试执行给定的{@link Runnable}，并记录是否抛出了{@link Throwable}。
      * Try to execute the given {@link Runnable} and just log if it throws a {@link Throwable}.
      */
     protected static void safeExecute(Runnable task) {
         try {
-            task.run();
+            task.run(); // 真正执行任务的方法
         } catch (Throwable t) {
             logger.warn("A task raised an exception. Task: {}", task, t);
         }

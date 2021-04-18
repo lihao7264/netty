@@ -34,7 +34,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
     private final Set<EventExecutor> readonlyChildren;
     private final AtomicInteger terminatedChildren = new AtomicInteger();
     private final Promise<?> terminationFuture = new DefaultPromise(GlobalEventExecutor.INSTANCE);
-    private final EventExecutorChooserFactory.EventExecutorChooser chooser;
+    private final EventExecutorChooserFactory.EventExecutorChooser chooser; // 给新连接绑定对应的NioEventLoop
 
     /**
      * Create a new instance.
@@ -72,16 +72,16 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
             throw new IllegalArgumentException(String.format("nThreads: %d (expected: > 0)", nThreads));
         }
 
-        if (executor == null) {
+        if (executor == null) { // 创建一个线程创建器
             executor = new ThreadPerTaskExecutor(newDefaultThreadFactory());
         }
 
         children = new EventExecutor[nThreads];
 
-        for (int i = 0; i < nThreads; i ++) {
+        for (int i = 0; i < nThreads; i ++) { // for循环创建每一个NioEventGroup
             boolean success = false;
             try {
-                children[i] = newChild(executor, args);
+                children[i] = newChild(executor, args); // 传入线程创建器
                 success = true;
             } catch (Exception e) {
                 // TODO: Think about if this is a good exception type
@@ -108,7 +108,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
             }
         }
 
-        chooser = chooserFactory.newChooser(children);
+        chooser = chooserFactory.newChooser(children); // 创建线程选择器
 
         final FutureListener<Object> terminationListener = new FutureListener<Object>() {
             @Override
@@ -129,7 +129,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
     }
 
     protected ThreadFactory newDefaultThreadFactory() {
-        return new DefaultThreadFactory(getClass());
+        return new DefaultThreadFactory(getClass()); // 获取当前的类传入（比如io.netty.channel.nio.NioEventLoop）
     }
 
     @Override

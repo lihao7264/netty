@@ -56,7 +56,7 @@ public abstract class AbstractBootstrapConfig<B extends AbstractBootstrap<B, C>,
      * Returns the configured {@link ChannelHandler} or {@code null} if non is configured yet.
      */
     public final ChannelHandler handler() {
-        return bootstrap.handler();
+        return bootstrap.handler(); // 获取bootstrap的handler处理器
     }
 
     /**

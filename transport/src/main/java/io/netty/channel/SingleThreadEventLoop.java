@@ -35,7 +35,7 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
     protected static final int DEFAULT_MAX_PENDING_TASKS = Math.max(16,
             SystemPropertyUtil.getInt("io.netty.eventLoop.maxPendingTasks", Integer.MAX_VALUE));
 
-    private final Queue<Runnable> tailTasks;
+    private final Queue<Runnable> tailTasks; // 也是任务队列，taskQueue的优先级 > 定时任务优先级> tailTasks（暂时还无用）优先级（优先级就是线程执行任务的先后）
 
     protected SingleThreadEventLoop(EventLoopGroup parent, ThreadFactory threadFactory, boolean addTaskWakesUp) {
         this(parent, threadFactory, addTaskWakesUp, DEFAULT_MAX_PENDING_TASKS, RejectedExecutionHandlers.reject());
@@ -136,7 +136,7 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
     }
 
     @Override
-    protected boolean hasTasks() {
+    protected boolean hasTasks() { // 是否有任务
         return super.hasTasks() || !tailTasks.isEmpty();
     }
 

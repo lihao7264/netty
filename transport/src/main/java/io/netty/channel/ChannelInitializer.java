@@ -99,7 +99,7 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
         ctx.close();
     }
 
-    /**
+    /** {@inheritDoc}如果重写此方法，请确保您调用super！（addLast会回调该方法）
      * {@inheritDoc} If override this method ensure you call super!
      */
     @Override
@@ -109,7 +109,7 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
             // The good thing about calling initChannel(...) in handlerAdded(...) is that there will be no ordering
             // surprises if a ChannelInitializer will add another ChannelInitializer. This is as all handlers
             // will be added in the expected order.
-            if (initChannel(ctx)) {
+            if (initChannel(ctx)) { // 每次添加完之后，都会调用initChannel方法
 
                 // We are done with init the Channel, removing the initializer now.
                 removeState(ctx);
@@ -126,15 +126,15 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
     private boolean initChannel(ChannelHandlerContext ctx) throws Exception {
         if (initMap.add(ctx)) { // Guard against re-entrance.
             try {
-                initChannel((C) ctx.channel());
+                initChannel((C) ctx.channel()); // 会调到用户重写的initChannel方法
             } catch (Throwable cause) {
                 // Explicitly call exceptionCaught(...) as we removed the handler before calling initChannel(...).
                 // We do so to prevent multiple calls to initChannel(...).
                 exceptionCaught(ctx, cause);
             } finally {
-                ChannelPipeline pipeline = ctx.pipeline();
+                ChannelPipeline pipeline = ctx.pipeline(); // 获取当前连接的pipeline
                 if (pipeline.context(this) != null) {
-                    pipeline.remove(this);
+                    pipeline.remove(this); // 从pipeline中删除自身
                 }
             }
             return true;

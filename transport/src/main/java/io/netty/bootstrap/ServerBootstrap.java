@@ -171,7 +171,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         }
         return this;
     }
-    // 这是一个特殊的ChannelHandler
+    // 这是一个特殊的ChannelHandler --- 服务端连接器
     private static class ServerBootstrapAcceptor extends ChannelInboundHandlerAdapter {
 
         private final EventLoopGroup childGroup; // 用户自定义的childGroup（创建 worker 线程组 用于进行 SocketChannel 的数据读写）
@@ -203,15 +203,15 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
 
         @Override
         @SuppressWarnings("unchecked")
-        public void channelRead(ChannelHandlerContext ctx, Object msg) {
+        public void channelRead(ChannelHandlerContext ctx, Object msg) { // 通过pipeline的 fireChannelRead方法传播进来
             final Channel child = (Channel) msg;
 
-            child.pipeline().addLast(childHandler);
+            child.pipeline().addLast(childHandler); // 添加childHandler
+            // childOptions、childAttrs 服务端启动的时候设置的
+            setChannelOptions(child, childOptions, logger); // 设置channel的options（主要是跟底层tcp读写相关的参数）
+            setAttributes(child, childAttrs); // childAttrs主要就是为了可以在客户端channel上自定义一些属性（密钥、存活时间等）
 
-            setChannelOptions(child, childOptions, logger);
-            setAttributes(child, childAttrs);
-
-            try {
+            try { // childGroup就是 workerGroup(一个NioEventLoopGroup)
                 childGroup.register(child).addListener(new ChannelFutureListener() {
                     @Override
                     public void operationComplete(ChannelFuture future) throws Exception {
@@ -219,7 +219,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
                             forceClose(child, future.cause());
                         }
                     }
-                });
+                }); // 选择
             } catch (Throwable t) {
                 forceClose(child, t);
             }

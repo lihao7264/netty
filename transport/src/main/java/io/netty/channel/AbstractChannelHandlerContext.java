@@ -71,15 +71,15 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
      * {@link ChannelHandler#handlerAdded(ChannelHandlerContext)} is about to be called.
      */
     private static final int ADD_PENDING = 1;
-    /**
+    /** 调用了{@link ChannelHandler＃handlerAdded（ChannelHandlerContext）}。
      * {@link ChannelHandler#handlerAdded(ChannelHandlerContext)} was called.
      */
     private static final int ADD_COMPLETE = 2;
-    /**
+    /** 调用了{@link ChannelHandler＃handlerRemoved（ChannelHandlerContext）}。
      * {@link ChannelHandler#handlerRemoved(ChannelHandlerContext)} was called.
      */
     private static final int REMOVE_COMPLETE = 3;
-    /**
+    /** {@link ChannelHandler＃handlerAdded（ChannelHandlerContext）}和{@link ChannelHandler＃handlerRemoved（ChannelHandlerContext）}均未调用。
      * Neither {@link ChannelHandler#handlerAdded(ChannelHandlerContext)}
      * nor {@link ChannelHandler#handlerRemoved(ChannelHandlerContext)} was called.
      */
@@ -213,7 +213,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     static void invokeChannelActive(final AbstractChannelHandlerContext next) {
         EventExecutor executor = next.executor();
         if (executor.inEventLoop()) {
-            next.invokeChannelActive();
+            next.invokeChannelActive(); //
         } else {
             executor.execute(new Runnable() {
                 @Override
@@ -668,7 +668,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         final AbstractChannelHandlerContext next = findContextOutbound(MASK_READ);
         EventExecutor executor = next.executor();
         if (executor.inEventLoop()) {
-            next.invokeRead();
+            next.invokeRead(); // 继续向前传播
         } else {
             Tasks tasks = next.invokeTasks;
             if (tasks == null) {
@@ -913,14 +913,14 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
 
     final boolean setAddComplete() {
         for (;;) {
-            int oldState = handlerState;
+            int oldState = handlerState; // {@link ChannelHandler＃handlerAdded（ChannelHandlerContext）}和{@link ChannelHandler＃handlerRemoved（ChannelHandlerContext）}均未调用。
             if (oldState == REMOVE_COMPLETE) {
                 return false;
             }
             // Ensure we never update when the handlerState is REMOVE_COMPLETE already.
             // oldState is usually ADD_PENDING but can also be REMOVE_COMPLETE when an EventExecutor is used that is not
             // exposing ordering guarantees.
-            if (HANDLER_STATE_UPDATER.compareAndSet(this, oldState, ADD_COMPLETE)) {
+            if (HANDLER_STATE_UPDATER.compareAndSet(this, oldState, ADD_COMPLETE)) { // 调用了{@link ChannelHandler＃handlerAdded（ChannelHandlerContext）}。
                 return true;
             }
         }
@@ -933,9 +933,9 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
 
     final void callHandlerAdded() throws Exception {
         // We must call setAddComplete before calling handlerAdded. Otherwise if the handlerAdded method generates
-        // any pipeline events ctx.handler() will miss them because the state will not allow it.
-        if (setAddComplete()) {
-            handler().handlerAdded(this);
+        // any pipeline events ctx.handler() will miss them because the state will not allow it. 我们必须在调用handlerAdded之前调用setAddComplete。否则，如果handlerAdded方法生成任何管道事件，则ctx.handler（）将错过它们，因为状态不允许这样做。
+        if (setAddComplete()) { // cas 方式修改调用过的方法
+            handler().handlerAdded(this); // 调用handler的 HandlerAdded 方法
         }
     }
 

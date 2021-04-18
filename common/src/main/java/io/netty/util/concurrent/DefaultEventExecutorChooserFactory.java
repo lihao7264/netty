@@ -45,7 +45,7 @@ public final class DefaultEventExecutorChooserFactory implements EventExecutorCh
 
     private static final class PowerOfTwoEventExecutorChooser implements EventExecutorChooser {
         private final AtomicInteger idx = new AtomicInteger();
-        private final EventExecutor[] executors;
+        private final EventExecutor[] executors; // 当前选择器下所有的NioEventLoop
 
         PowerOfTwoEventExecutorChooser(EventExecutor[] executors) {
             this.executors = executors;

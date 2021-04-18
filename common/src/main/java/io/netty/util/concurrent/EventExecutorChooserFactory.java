@@ -35,7 +35,7 @@ public interface EventExecutorChooserFactory {
     interface EventExecutorChooser {
 
         /**
-         * Returns the new {@link EventExecutor} to use.
+         * Returns the new {@link EventExecutor} to use. 返回要使用的新{@link EventExecutor}。
          */
         EventExecutor next();
     }

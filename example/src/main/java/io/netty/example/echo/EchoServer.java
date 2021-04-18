@@ -59,7 +59,7 @@ public final class EchoServer {
              .option(ChannelOption.SO_BACKLOG, 100) // 设置 NioServerSocketChannel 的可选项
              .handler(new LoggingHandler(LogLevel.INFO)) // 设置 NioServerSocketChannel 的处理器。(LoggingHandler用于打印服务端的每个事件)
              .childHandler(new ChannelInitializer<SocketChannel>() { // 设置连入服务端的 Client 的 SocketChannel 的处理器。(使用 ChannelInitializer 来初始化连入服务端的 Client 的 SocketChannel 的处理器。)
-                 @Override
+                 @Override // ChannelInitializer每次添加到handler之后，都会调用initChannel方法，在该方法中，用户可以获取到channel的pipeline，然后向pipeline中添加自定义的handler，调用完initChannel方法之后，会将自身删除
                  public void initChannel(SocketChannel ch) throws Exception { // 设置连入服务端的 Client 的 SocketChannel 的处理器
                      ChannelPipeline p = ch.pipeline();
                      if (sslCtx != null) {

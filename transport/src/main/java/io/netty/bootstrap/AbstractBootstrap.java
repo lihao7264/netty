@@ -460,7 +460,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     private static void setChannelOption(
             Channel channel, ChannelOption<?> option, Object value, InternalLogger logger) {
         try {
-            if (!channel.config().setOption((ChannelOption<Object>) option, value)) { // 将options配置到tcp参数配置类中
+            if (!channel.config().setOption((ChannelOption<Object>) option, value)) { // 将options配置到tcp参数配置类（channelConfig类）中
                 logger.warn("Unknown channel option '{}' for channel '{}'", option, channel);
             }
         } catch (Throwable t) {

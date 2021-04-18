@@ -220,7 +220,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
                 return this;
             }
         }
-        callHandlerAdded0(newCtx);
+        callHandlerAdded0(newCtx); // 调用handler的 HandlerAdded 方法
         return this;
     }
 
@@ -606,7 +606,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     private void callHandlerAdded0(final AbstractChannelHandlerContext ctx) {
         try {
-            ctx.callHandlerAdded();
+            ctx.callHandlerAdded(); // 调用handler的 HandlerAdded 方法
         } catch (Throwable t) {
             boolean removed = false;
             try {
@@ -892,13 +892,13 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public final ChannelPipeline fireChannelActive() {
-        AbstractChannelHandlerContext.invokeChannelActive(head);
+        AbstractChannelHandlerContext.invokeChannelActive(head); // 从头部的channelHandler开始传播
         return this;
     }
 
     @Override
     public final ChannelPipeline fireChannelInactive() {
-        AbstractChannelHandlerContext.invokeChannelInactive(head);
+        AbstractChannelHandlerContext.invokeChannelInactive(head);  // 从头部的channelHandler开始传播
         return this;
     }
 
@@ -1001,7 +1001,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public final ChannelPipeline read() {
-        tail.read(); // pipeline中最尾部的节点
+        tail.read(); // 从pipeline中最尾部的节点开始向前传播
         return this;
     }
 
@@ -1359,7 +1359,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
         @Override
         public void read(ChannelHandlerContext ctx) {
-            unsafe.beginRead();
+            unsafe.beginRead(); // 在客户端Channel上调用fireChannelActive最终会调用到NioSocketChannelUnsafe beginRead方法
         }
 
         @Override
@@ -1395,8 +1395,8 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
         @Override
         public void channelActive(ChannelHandlerContext ctx) {
-            ctx.fireChannelActive();
-
+            ctx.fireChannelActive();// Active事件向下传播
+            //
             readIfIsAutoRead(); // 将之前注册到selector上事件，重新绑定为accept事件，有新连接进来，selector就会轮训到accept事件，就会将这个连接交给netty来处理
         }
 
@@ -1418,7 +1418,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         }
 
         private void readIfIsAutoRead() {
-            if (channel.config().isAutoRead()) {
+            if (channel.config().isAutoRead()) { // 默认自动读（只要当前连接注册到selector上了，它就会自动读）
                 channel.read(); // channel的read事件
             }
         }

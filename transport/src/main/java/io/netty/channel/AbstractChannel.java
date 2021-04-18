@@ -287,7 +287,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
     @Override
     public Channel read() {
-        pipeline.read();
+        pipeline.read(); //
         return this;
     }
 
@@ -474,16 +474,16 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
             //  设置 Channel 的 eventLoop 属性
-            AbstractChannel.this.eventLoop = eventLoop; // 绑定线程（也就是 接受连接的线程组 ）
+            AbstractChannel.this.eventLoop = eventLoop; // 绑定线程（也就是 接受连接的线程组 ） --- 当前的NioEventLoop绑定到客户端的channel上
             // 在 EventLoop 中执行注册逻辑
-            if (eventLoop.inEventLoop()) {
+            if (eventLoop.inEventLoop()) { // 是否在客户端的NioEventLoop中，不在，在服务端的NioEventLoop中
                 register0(promise);
             } else {
                 try {
                     eventLoop.execute(new Runnable() {
                         @Override
                         public void run() {
-                            register0(promise);
+                            register0(promise); // channel注册到selector上
                         }
                     });
                 } catch (Throwable t) { //若调用 EventLoop#execute(Runnable) 方法发生异常，则进行处理
@@ -517,8 +517,8 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 pipeline.fireChannelRegistered();  // 触发通知已注册事件（传播channel注册成功的事件）
                 // Only fire a channelActive if the channel has never been registered. This prevents firing
                 // multiple channel actives if the channel is deregistered and re-registered.
-                if (isActive()) { // 启动的时候，这里返回的都是false
-                    if (firstRegistration) {
+                if (isActive()) { // 启动的时候，这里返回的都是false 。（后面客户端连接接入的时候，这里返回true）
+                    if (firstRegistration) { // 第一次注册到NioEventLoop上
                         pipeline.fireChannelActive();
                     } else if (config().isAutoRead()) {
                         // This channel was registered before and autoRead() is set. This means we need to begin read

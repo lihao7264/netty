@@ -20,10 +20,10 @@ import io.netty.util.concurrent.FutureListener;
 
 import java.net.ConnectException;
 import java.net.SocketAddress;
-
+// 该接口会触发一些事件 ，主要是Outbound的传播，Outbound事件主要指的是写事件
 public interface ChannelOutboundInvoker {
 
-    /**
+    /** 请求绑定到给定的{@link SocketAddress}并在操作完成后通知{@link ChannelFuture}，这是因为操作成功或由于错误。
      * Request to bind to the given {@link SocketAddress} and notify the {@link ChannelFuture} once the operation
      * completes, either because the operation was successful or because of an error.
      * <p>
@@ -34,7 +34,7 @@ public interface ChannelOutboundInvoker {
      */
     ChannelFuture bind(SocketAddress localAddress);
 
-    /**
+    /** 操作完成后，请请求连接到给定的{@link SocketAddress}并通知{@link ChannelFuture}，这可能是由于操作成功还是由于错误。
      * Request to connect to the given {@link SocketAddress} and notify the {@link ChannelFuture} once the operation
      * completes, either because the operation was successful or because of an error.
      * <p>

@@ -140,6 +140,6 @@ public class ChannelInboundHandlerAdapter extends ChannelHandlerAdapter implemen
     @SuppressWarnings("deprecation")
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause)
             throws Exception {
-        ctx.fireExceptionCaught(cause);
+        ctx.fireExceptionCaught(cause); // 默认情况直接将异常向下传播
     }
 }

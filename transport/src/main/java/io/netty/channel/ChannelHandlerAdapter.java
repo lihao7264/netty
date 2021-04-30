@@ -21,13 +21,13 @@ import io.netty.util.internal.InternalThreadLocalMap;
 
 import java.util.Map;
 
-/**
+/** {@link ChannelHandler}的框架实现。（ChannelInboundHandlerAdapter、ChannelOutboundHandlerAdapter）
  * Skeleton implementation of a {@link ChannelHandler}.
  */
 public abstract class ChannelHandlerAdapter implements ChannelHandler {
 
     // Not using volatile because it's used only for a sanity check.
-    boolean added;
+    boolean added; // channelHandler是否被添加到pipeline中的标记。（不使用volatile，因为它仅用于完整性检查。）
 
     /**
      * Throws {@link IllegalStateException} if {@link ChannelHandlerAdapter#isSharable()} returns {@code true}
@@ -38,7 +38,7 @@ public abstract class ChannelHandlerAdapter implements ChannelHandler {
         }
     }
 
-    /**
+    /** 如果实现是{@link Sharable}，则返回{@code true}，因此可以将其添加到不同的{@link ChannelPipeline}中。
      * Return {@code true} if the implementation is {@link Sharable} and so can be added
      * to different {@link ChannelPipeline}s.
      */
@@ -55,7 +55,7 @@ public abstract class ChannelHandlerAdapter implements ChannelHandler {
         Map<Class<?>, Boolean> cache = InternalThreadLocalMap.get().handlerSharableCache();
         Boolean sharable = cache.get(clazz);
         if (sharable == null) {
-            sharable = clazz.isAnnotationPresent(Sharable.class);
+            sharable = clazz.isAnnotationPresent(Sharable.class); // 获取到@Sharable的注解进行判断（如果该类注解了@Sharable，说明这个handler是共享的，可以被多次添加的）
             cache.put(clazz, sharable);
         }
         return sharable;
@@ -89,6 +89,6 @@ public abstract class ChannelHandlerAdapter implements ChannelHandler {
     @Override
     @Deprecated
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
-        ctx.fireExceptionCaught(cause);
+        ctx.fireExceptionCaught(cause); // 默认情况直接将异常向下传播
     }
 }

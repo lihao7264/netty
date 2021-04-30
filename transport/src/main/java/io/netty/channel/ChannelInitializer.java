@@ -57,9 +57,9 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
     // We use a Set as a ChannelInitializer is usually shared between all Channels in a Bootstrap /
     // ServerBootstrap. This way we can reduce the memory usage compared to use Attributes.
     private final Set<ChannelHandlerContext> initMap = Collections.newSetFromMap(
-            new ConcurrentHashMap<ChannelHandlerContext, Boolean>());
+            new ConcurrentHashMap<ChannelHandlerContext, Boolean>()); // 我们使用Set作为ChannelInitializer，通常在Bootstrap / ServerBootstrap中的所有通道之间共享。这样，与使用属性相比，我们可以减少内存使用量。
 
-    /**
+    /** 一旦注册了{@link Channel}，就会调用此方法。方法返回后，该实例将从{@link Channel}的{@link ChannelPipeline}中删除。
      * This method will be called once the {@link Channel} was registered. After the method returns this instance
      * will be removed from the {@link ChannelPipeline} of the {@link Channel}.
      *
@@ -104,7 +104,7 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
      */
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-        if (ctx.channel().isRegistered()) {
+        if (ctx.channel().isRegistered()) { // 注册成功
             // This should always be true with our current DefaultChannelPipeline implementation.
             // The good thing about calling initChannel(...) in handlerAdded(...) is that there will be no ordering
             // surprises if a ChannelInitializer will add another ChannelInitializer. This is as all handlers
@@ -124,7 +124,7 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
 
     @SuppressWarnings("unchecked")
     private boolean initChannel(ChannelHandlerContext ctx) throws Exception {
-        if (initMap.add(ctx)) { // Guard against re-entrance.
+        if (initMap.add(ctx)) { // Guard against re-entrance. 这段代码是否被执行过
             try {
                 initChannel((C) ctx.channel()); // 会调到用户重写的initChannel方法
             } catch (Throwable cause) {

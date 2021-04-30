@@ -35,13 +35,13 @@ import java.util.WeakHashMap;
 final class ChannelHandlerMask {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(ChannelHandlerMask.class);
 
-    // Using to mask which methods must be called for a ChannelHandler.
-    static final int MASK_EXCEPTION_CAUGHT = 1;
+    // Using to mask which methods must be called for a ChannelHandler. 用于屏蔽必须为ChannelHandler调用哪些方法。
+    static final int MASK_EXCEPTION_CAUGHT = 1; // 异常捕获事件的标志
     static final int MASK_CHANNEL_REGISTERED = 1 << 1;
     static final int MASK_CHANNEL_UNREGISTERED = 1 << 2;
     static final int MASK_CHANNEL_ACTIVE = 1 << 3;
     static final int MASK_CHANNEL_INACTIVE = 1 << 4;
-    static final int MASK_CHANNEL_READ = 1 << 5;
+    static final int MASK_CHANNEL_READ = 1 << 5; // channelRead事件的标志位（32）
     static final int MASK_CHANNEL_READ_COMPLETE = 1 << 6;
     static final int MASK_USER_EVENT_TRIGGERED = 1 << 7;
     static final int MASK_CHANNEL_WRITABILITY_CHANGED = 1 << 8;
@@ -51,12 +51,12 @@ final class ChannelHandlerMask {
     static final int MASK_CLOSE = 1 << 12;
     static final int MASK_DEREGISTER = 1 << 13;
     static final int MASK_READ = 1 << 14;
-    static final int MASK_WRITE = 1 << 15;
-    static final int MASK_FLUSH = 1 << 16;
+    static final int MASK_WRITE = 1 << 15;  // 写的标志位
+    static final int MASK_FLUSH = 1 << 16;  // 刷新的标志位
 
     static final int MASK_ONLY_INBOUND =  MASK_CHANNEL_REGISTERED |
             MASK_CHANNEL_UNREGISTERED | MASK_CHANNEL_ACTIVE | MASK_CHANNEL_INACTIVE | MASK_CHANNEL_READ |
-            MASK_CHANNEL_READ_COMPLETE | MASK_USER_EVENT_TRIGGERED | MASK_CHANNEL_WRITABILITY_CHANGED;
+            MASK_CHANNEL_READ_COMPLETE | MASK_USER_EVENT_TRIGGERED | MASK_CHANNEL_WRITABILITY_CHANGED; // INBOUND对应的事件集合（除去异常捕获事件）
     private static final int MASK_ALL_INBOUND = MASK_EXCEPTION_CAUGHT | MASK_ONLY_INBOUND;
     static final int MASK_ONLY_OUTBOUND =  MASK_BIND | MASK_CONNECT | MASK_DISCONNECT |
             MASK_CLOSE | MASK_DEREGISTER | MASK_READ | MASK_WRITE | MASK_FLUSH;
@@ -70,7 +70,7 @@ final class ChannelHandlerMask {
                 }
             };
 
-    /**
+    /** 返回{@code executionMask}。
      * Return the {@code executionMask}.
      */
     static int mask(Class<? extends ChannelHandler> clazz) {
@@ -90,9 +90,9 @@ final class ChannelHandlerMask {
      */
     private static int mask0(Class<? extends ChannelHandler> handlerType) {
         int mask = MASK_EXCEPTION_CAUGHT;
-        try {
+        try { // 如果 ChannelInboundHandler 类 是 handlerType 的父类
             if (ChannelInboundHandler.class.isAssignableFrom(handlerType)) {
-                mask |= MASK_ALL_INBOUND;
+                mask |= MASK_ALL_INBOUND; // 所有的Inbound事件
 
                 if (isSkippable(handlerType, "channelRegistered", ChannelHandlerContext.class)) {
                     mask &= ~MASK_CHANNEL_REGISTERED;
@@ -119,7 +119,7 @@ final class ChannelHandlerMask {
                     mask &= ~MASK_USER_EVENT_TRIGGERED;
                 }
             }
-
+            // 如果 ChannelOutboundHandler 类 是 handlerType 的父类
             if (ChannelOutboundHandler.class.isAssignableFrom(handlerType)) {
                 mask |= MASK_ALL_OUTBOUND;
 
@@ -151,7 +151,7 @@ final class ChannelHandlerMask {
                     mask &= ~MASK_FLUSH;
                 }
             }
-
+            // 异常
             if (isSkippable(handlerType, "exceptionCaught", ChannelHandlerContext.class, Throwable.class)) {
                 mask &= ~MASK_EXCEPTION_CAUGHT;
             }

@@ -47,8 +47,8 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     static final InternalLogger logger = InternalLoggerFactory.getInstance(DefaultChannelPipeline.class);
 
-    private static final String HEAD_NAME = generateName0(HeadContext.class);
-    private static final String TAIL_NAME = generateName0(TailContext.class);
+    private static final String HEAD_NAME = generateName0(HeadContext.class); // 生成head节点的名字
+    private static final String TAIL_NAME = generateName0(TailContext.class); // 生成tail节点的名字
 
     private static final FastThreadLocal<Map<Class<?>, String>> nameCaches =
             new FastThreadLocal<Map<Class<?>, String>>() {
@@ -90,13 +90,13 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     private boolean registered;
 
     protected DefaultChannelPipeline(Channel channel) { // 初始化pipeline，把channel加入到逻辑链路中（pipeline）
-        this.channel = ObjectUtil.checkNotNull(channel, "channel");
+        this.channel = ObjectUtil.checkNotNull(channel, "channel"); // 保存channel
         succeededFuture = new SucceededChannelFuture(channel, null);
         voidPromise =  new VoidChannelPromise(channel, true);
-
+        // 默认创建两个节点（TailContext、HeadContext）
         tail = new TailContext(this);
         head = new HeadContext(this);
-
+        // 将两个节点变成一个双向链表数据结构
         head.next = tail;
         tail.prev = head;
     }
@@ -117,7 +117,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     private AbstractChannelHandlerContext newContext(EventExecutorGroup group, String name, ChannelHandler handler) {
-        return new DefaultChannelHandlerContext(this, childExecutor(group), name, handler);
+        return new DefaultChannelHandlerContext(this, childExecutor(group), name, handler); //入参： pipeline+EventExecutorGroup+名称+ChannelHandler
     }
 
     private EventExecutor childExecutor(EventExecutorGroup group) {
@@ -199,9 +199,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     public final ChannelPipeline addLast(EventExecutorGroup group, String name, ChannelHandler handler) {
         final AbstractChannelHandlerContext newCtx;
         synchronized (this) {
-            checkMultiplicity(handler);
-
-            newCtx = newContext(group, filterName(name, handler), handler);
+            checkMultiplicity(handler); // 1、判断ChannelHandler是否重复添加
+            // 2、创建一个节点，并且添加至链表（pipeline上）
+            newCtx = newContext(group, filterName(name, handler), handler); // NioEventLoop（为空） + 名称+ channelHandler 构建 ChannelHandlerContext
 
             addLast0(newCtx);
 
@@ -216,16 +216,16 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
             EventExecutor executor = newCtx.executor();
             if (!executor.inEventLoop()) {
-                callHandlerAddedInEventLoop(newCtx, executor);
+                callHandlerAddedInEventLoop(newCtx, executor); // 如果不在当前线程的话，则生成一个任务，丢到该ChannelHandler所在任务执行器的队列中
                 return this;
             }
         }
-        callHandlerAdded0(newCtx); // 调用handler的 HandlerAdded 方法
+        callHandlerAdded0(newCtx); //  如果不在当前线程的话，直接执行，调用handler的 HandlerAdded 方法
         return this;
     }
-
-    private void addLast0(AbstractChannelHandlerContext newCtx) {
-        AbstractChannelHandlerContext prev = tail.prev;
+    // 添加当前节点到链表末尾tail节点之前
+    private void addLast0(AbstractChannelHandlerContext newCtx) { // 将当前节点插入到tail节点和tail原前置节点的中间（组成一个双向链表）
+        AbstractChannelHandlerContext prev = tail.prev; // 获取tail节点前置节点
         newCtx.prev = prev;
         newCtx.next = tail;
         prev.next = newCtx;
@@ -279,9 +279,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     private String filterName(String name, ChannelHandler handler) {
         if (name == null) {
-            return generateName(handler);
+            return generateName(handler); // 如果未传入名称，则生成一个默认的名称
         }
-        checkDuplicateName(name);
+        checkDuplicateName(name); //  如果传入名称，则校验名称是否重复
         return name;
     }
 
@@ -367,14 +367,14 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public final ChannelPipeline addLast(ChannelHandler... handlers) {
-        return addLast(null, handlers);
+        return addLast(null, handlers); // 将ChannelHandler添加到pipeline的末尾
     }
 
     @Override
     public final ChannelPipeline addLast(EventExecutorGroup executor, ChannelHandler... handlers) {
         ObjectUtil.checkNotNull(handlers, "handlers");
 
-        for (ChannelHandler h: handlers) {
+        for (ChannelHandler h: handlers) { // for循环多个ChannelHandler
             if (h == null) {
                 break;
             }
@@ -409,7 +409,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     private static String generateName0(Class<?> handlerType) {
-        return StringUtil.simpleClassName(handlerType) + "#0";
+        return StringUtil.simpleClassName(handlerType) + "#0"; // 简单的类名+#0
     }
 
     @Override
@@ -450,10 +450,10 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     private AbstractChannelHandlerContext remove(final AbstractChannelHandlerContext ctx) {
-        assert ctx != head && ctx != tail;
+        assert ctx != head && ctx != tail; // 当前删除的节点不能是head和tail
 
-        synchronized (this) {
-            atomicRemoveFromHandlerList(ctx);
+        synchronized (this) { // 同步
+            atomicRemoveFromHandlerList(ctx); //2、链表的删除
 
             // If the registered is false it means that the channel was not registered on an eventloop yet.
             // In this case we remove the context from the pipeline and add a task that will call
@@ -462,9 +462,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
                 callHandlerCallbackLater(ctx, false);
                 return ctx;
             }
-
+            // 3、回调删除Handler事件
             EventExecutor executor = ctx.executor();
-            if (!executor.inEventLoop()) {
+            if (!executor.inEventLoop()) { // 判断是否是当前线程
                 executor.execute(new Runnable() {
                     @Override
                     public void run() {
@@ -478,14 +478,14 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         return ctx;
     }
 
-    /**
+    /** 标准的双向链表删除： 同步方法以使从双链表删除处理程序成为原子操作。
      * Method is synchronized to make the handler removal from the double linked list atomic.
      */
     private synchronized void atomicRemoveFromHandlerList(AbstractChannelHandlerContext ctx) {
         AbstractChannelHandlerContext prev = ctx.prev;
         AbstractChannelHandlerContext next = ctx.next;
-        prev.next = next;
-        next.prev = prev;
+        prev.next = next; // 删除节点的前置节点连接到删除节点的后置节点
+        next.prev = prev; // 删除节点的后置节点连接到删除节点的前置节点
     }
 
     @Override
@@ -592,15 +592,15 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         oldCtx.next = newCtx;
     }
 
-    private static void checkMultiplicity(ChannelHandler handler) {
-        if (handler instanceof ChannelHandlerAdapter) {
-            ChannelHandlerAdapter h = (ChannelHandlerAdapter) handler;
-            if (!h.isSharable() && h.added) {
+    private static void checkMultiplicity(ChannelHandler handler) { // 判断channelHandler是否重复添加
+        if (handler instanceof ChannelHandlerAdapter) { // 这个handler是否是 ChannelHandlerAdapter的 实例
+            ChannelHandlerAdapter h = (ChannelHandlerAdapter) handler; // 强转
+            if (!h.isSharable() && h.added) {// 判断handler是否是不可共享的 以及 是否被添加过了，如果是的话，则抛出异常
                 throw new ChannelPipelineException(
                         h.getClass().getName() +
                         " is not a @Sharable handler, so can't be added or removed multiple times.");
             }
-            h.added = true;
+            h.added = true; // 设置handler已经被添加
         }
     }
 
@@ -630,7 +630,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
             }
         }
     }
-
+    // 回调删除Handler事件
     private void callHandlerRemoved0(final AbstractChannelHandlerContext ctx) {
         // Notify the complete removal.
         try {
@@ -714,13 +714,13 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     @Override
-    public final ChannelHandlerContext context(ChannelHandler handler) {
+    public final ChannelHandlerContext context(ChannelHandler handler) { // 获取到handler的ChannelHandlerContext包装对象
         ObjectUtil.checkNotNull(handler, "handler");
 
-        AbstractChannelHandlerContext ctx = head.next;
-        for (;;) {
+        AbstractChannelHandlerContext ctx = head.next;// 获取head的后继节点
+        for (;;) { // 从头节点遍历为尾节点，判断handler是否相等
 
-            if (ctx == null) {
+            if (ctx == null) {// 遍历到最后一个节点，还是没有找到，则返回null
                 return null;
             }
 
@@ -916,7 +916,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public final ChannelPipeline fireChannelRead(Object msg) {
-        AbstractChannelHandlerContext.invokeChannelRead(head, msg);
+        AbstractChannelHandlerContext.invokeChannelRead(head, msg); // 从head开始向下传播
         return this;
     }
 
@@ -1007,7 +1007,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public final ChannelFuture write(Object msg) {
-        return tail.write(msg);
+        return tail.write(msg); // 从tail节点开始往前传播
     }
 
     @Override
@@ -1050,14 +1050,14 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         return voidPromise;
     }
 
-    private void checkDuplicateName(String name) {
-        if (context0(name) != null) {
+    private void checkDuplicateName(String name) { // 校验名称是否重复
+        if (context0(name) != null) { // 如果发现pipeline中存在同名的channelHandler，则抛出异常
             throw new IllegalArgumentException("Duplicate handler name: " + name);
         }
     }
 
-    private AbstractChannelHandlerContext context0(String name) {
-        AbstractChannelHandlerContext context = head.next;
+    private AbstractChannelHandlerContext context0(String name) { // 遍历pipeline上的节点，发现该名称的节点已经存在，则返回名称
+        AbstractChannelHandlerContext context = head.next; // 从head开启遍历到tail
         while (context != tail) {
             if (context.name().equals(name)) {
                 return context;
@@ -1075,8 +1075,8 @@ public class DefaultChannelPipeline implements ChannelPipeline {
             return ctx;
         }
     }
-
-    private AbstractChannelHandlerContext getContextOrDie(ChannelHandler handler) {
+    // 1、找到节点
+    private AbstractChannelHandlerContext getContextOrDie(ChannelHandler handler) { // 要么根据handler获取到节点，要么抛出异常
         AbstractChannelHandlerContext ctx = (AbstractChannelHandlerContext) context(handler);
         if (ctx == null) {
             throw new NoSuchElementException(handler.getClass().getName());
@@ -1143,18 +1143,18 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         });
     }
 
-    /**
+    /** 一旦{@link Throwable}到达{@link ChannelPipeline}的结尾时被调用，而没有在{@link ChannelHandler＃exceptionCaught（ChannelHandlerContext，Throwable）}中被用户处理，则被调用。
      * Called once a {@link Throwable} hit the end of the {@link ChannelPipeline} without been handled by the user
      * in {@link ChannelHandler#exceptionCaught(ChannelHandlerContext, Throwable)}.
      */
-    protected void onUnhandledInboundException(Throwable cause) {
-        try {
+    protected void onUnhandledInboundException(Throwable cause) { // 打印提示性日志(异常在哪里触发以及异常信息)
+        try {// 打印异常信息 ---- 发生异常了，但是自定义的ChannelHandler没有捕获，就会在这里进行捕获
             logger.warn(
                     "An exceptionCaught() event was fired, and it reached at the tail of the pipeline. " +
                             "It usually means the last handler in the pipeline did not handle the exception.",
                     cause);
         } finally {
-            ReferenceCountUtil.release(cause);
+            ReferenceCountUtil.release(cause); // 如果msg是内存方面可释放的对象（比如ByteBuf），最终通过这种方式释放掉。
         }
     }
 
@@ -1178,12 +1178,12 @@ public class DefaultChannelPipeline implements ChannelPipeline {
      * to call {@link ReferenceCountUtil#release(Object)} on the given msg at some point.
      */
     protected void onUnhandledInboundMessage(Object msg) {
-        try {
+        try { // 打印提示性的日志（你Inbound传进来Message（消息），但是这个消息没有做处理，所以会在tail这里做处理）
             logger.debug(
                     "Discarded inbound message {} that reached at the tail of the pipeline. " +
                             "Please check your pipeline configuration.", msg);
         } finally {
-            ReferenceCountUtil.release(msg);
+            ReferenceCountUtil.release(msg); // 如果msg是内存方面可释放的对象（比如ByteBuf），最终通过这种方式释放掉。
         }
     }
 
@@ -1240,15 +1240,15 @@ public class DefaultChannelPipeline implements ChannelPipeline {
             buffer.decrementPendingOutboundBytes(size);
         }
     }
-
+    // 一个特殊的包罗万象的处理程序，可同时处理字节和消息。(会传播InBound事件)
     // A special catch-all handler that handles both bytes and messages.
     final class TailContext extends AbstractChannelHandlerContext implements ChannelInboundHandler {
 
-        TailContext(DefaultChannelPipeline pipeline) {
+        TailContext(DefaultChannelPipeline pipeline) { //
             super(pipeline, null, TAIL_NAME, TailContext.class);
-            setAddComplete();
+            setAddComplete(); // 将当前节点设置为已经添加
         }
-
+        // TailContext即是节点信息，本身也是ChannelHandler
         @Override
         public ChannelHandler handler() {
             return this;
@@ -1287,13 +1287,13 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         }
 
         @Override
-        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-            onUnhandledInboundException(cause);
+        public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) { // exceptionCaught事件传播到tail节点
+            onUnhandledInboundException(cause); // 发生异常的时候，进行处理
         }
-
+        // tail节点给channelRead事件进行兜底。（如果事件一直传播到tail的话）
         @Override
-        public void channelRead(ChannelHandlerContext ctx, Object msg) {
-            onUnhandledInboundMessage(ctx, msg);
+        public void channelRead(ChannelHandlerContext ctx, Object msg) { // 假如channelRead事件一直传播到tail的话，则会打印一个告警信息
+            onUnhandledInboundMessage(ctx, msg); // 假如message没有被处理，这里会触发告警日志，建议你处理
         }
 
         @Override
@@ -1301,18 +1301,18 @@ public class DefaultChannelPipeline implements ChannelPipeline {
             onUnhandledInboundChannelReadComplete();
         }
     }
-
+    // head功能分析：1、事件向下传播 2、进行读写操作的时候，都是委托到unsafe进行操作
     final class HeadContext extends AbstractChannelHandlerContext
             implements ChannelOutboundHandler, ChannelInboundHandler {
 
-        private final Unsafe unsafe;
+        private final Unsafe unsafe; // 实现数据的读写
 
         HeadContext(DefaultChannelPipeline pipeline) {
             super(pipeline, null, HEAD_NAME, HeadContext.class);
-            unsafe = pipeline.channel().unsafe();
-            setAddComplete();
+            unsafe = pipeline.channel().unsafe(); // 获取unsafe
+            setAddComplete(); // 标识节点已经被添加了
         }
-
+        // HeadContext即是节点信息，本身也是ChannelHandler
         @Override
         public ChannelHandler handler() {
             return this;
@@ -1331,7 +1331,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         @Override
         public void bind(
                 ChannelHandlerContext ctx, SocketAddress localAddress, ChannelPromise promise) {
-            unsafe.bind(localAddress, promise);
+            unsafe.bind(localAddress, promise); // 绑定端口
         }
 
         @Override
@@ -1394,9 +1394,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         }
 
         @Override
-        public void channelActive(ChannelHandlerContext ctx) {
+        public void channelActive(ChannelHandlerContext ctx) { // 连接刚建立之后，会调用到该方法
             ctx.fireChannelActive();// Active事件向下传播
-            //
+
             readIfIsAutoRead(); // 将之前注册到selector上事件，重新绑定为accept事件，有新连接进来，selector就会轮训到accept事件，就会将这个连接交给netty来处理
         }
 
@@ -1407,12 +1407,12 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
-            ctx.fireChannelRead(msg);
+            ctx.fireChannelRead(msg); // 将事件传播中的对象msg，通过 fireChannelRead 向下传播
         }
 
         @Override
         public void channelReadComplete(ChannelHandlerContext ctx) {
-            ctx.fireChannelReadComplete();
+            ctx.fireChannelReadComplete(); // 向下传播事件
 
             readIfIsAutoRead();
         }

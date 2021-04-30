@@ -368,7 +368,7 @@ public interface ChannelPipeline
      */
     ChannelPipeline addFirst(EventExecutorGroup group, ChannelHandler... handlers);
 
-    /** Inserts {@link ChannelHandler}s at the last position of this pipeline.
+    /** 在此管道的最后位置插入{@link ChannelHandler}。
      * Inserts {@link ChannelHandler}s at the last position of this pipeline.
      *
      * @param handlers  the handlers to insert last

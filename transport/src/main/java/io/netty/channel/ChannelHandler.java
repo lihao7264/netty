@@ -25,7 +25,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/**
+/** 处理I / O事件或拦截I / O操作，并将其转发到其{@link ChannelPipeline}中的下一个处理器。
  * Handles an I/O event or intercepts an I/O operation, and forwards it to its next handler in
  * its {@link ChannelPipeline}.
  *
@@ -177,18 +177,18 @@ import java.lang.annotation.Target;
  */
 public interface ChannelHandler {
 
-    /** 在将{@link ChannelHandler}添加到实际上下文中并可以处理事件后调用。
+    /** 在将{@link ChannelHandler}添加到实际上下文中并可以处理事件后调用。（ChannelHandler被添加到pipeline中的回调）
      * Gets called after the {@link ChannelHandler} was added to the actual context and it's ready to handle events.
      */
     void handlerAdded(ChannelHandlerContext ctx) throws Exception;
 
-    /**
+    /** 在将{@link ChannelHandler}从实际上下文中删除并且不再处理事件之后被调用。（ChannelHandler从pipeline中删除的回调）
      * Gets called after the {@link ChannelHandler} was removed from the actual context and it doesn't handle events
      * anymore.
      */
     void handlerRemoved(ChannelHandlerContext ctx) throws Exception;
 
-    /**
+    /** 如果引发了{@link Throwable}，则调用该方法。（异常回调）
      * Gets called if a {@link Throwable} was thrown.
      *
      * @deprecated if you want to handle this event you should implement {@link ChannelInboundHandler} and
@@ -197,7 +197,7 @@ public interface ChannelHandler {
     @Deprecated
     void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception;
 
-    /**
+    /** @Sharable表示，这个channelHandler可以被多个pipeline进行添加
      * Indicates that the same instance of the annotated {@link ChannelHandler}
      * can be added to one or more {@link ChannelPipeline}s multiple times
      * without a race condition.

@@ -32,8 +32,8 @@ abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
 
     protected PoolChunk<T> chunk;
     protected long handle;
-    protected T memory;
-    protected int offset;
+    protected T memory; // 内存: 相当于ByteBuf分配内存的首地址
+    protected int offset; // 偏移地址
     protected int length;
     int maxLength;
     PoolThreadCache cache;
@@ -179,7 +179,7 @@ abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
         recyclerHandle.recycle(this);
     }
 
-    protected final int idx(int index) {
+    protected final int idx(int index) { // 该指针基于当前内存的偏移地址是多少
         return offset + index;
     }
 

@@ -64,15 +64,15 @@ import java.nio.charset.UnsupportedCharsetException;
  * respectively.  The following diagram shows how a buffer is segmented into
  * three areas by the two pointers:
  *
- * <pre>
+ * <pre> maxCapacity 表示最大能扩充到多大容量（capacity的最大值，如果不够了，就拒绝写入）
  *      +-------------------+------------------+------------------+
  *      | discardable bytes |  readable bytes  |  writable bytes  |
  *      |                   |     (CONTENT)    |                  |
  *      +-------------------+------------------+------------------+
  *      |                   |                  |                  |
  *      0      <=      readerIndex   <=   writerIndex    <=    capacity
- * </pre>
- *
+ * </pre>                      可读数据        空闲空间（可进行写数据）
+ *                读数据，从当前指针开始   写数据，从当前指针开始  容量
  * <h4>Readable bytes (the actual content)</h4>
  *
  * This segment is where the actual data is stored.  Any operation whose name
@@ -403,19 +403,19 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      */
     public abstract ByteBuf setIndex(int readerIndex, int writerIndex);
 
-    /**
+    /** writeIndex-readIndex
      * Returns the number of readable bytes which is equal to
      * {@code (this.writerIndex - this.readerIndex)}.
      */
     public abstract int readableBytes();
 
-    /**
+    /** capacity-writeIndex
      * Returns the number of writable bytes which is equal to
      * {@code (this.capacity - this.writerIndex)}.
      */
     public abstract int writableBytes();
 
-    /**
+    /** maxCapacity-writeIndex
      * Returns the maximum possible number of writable bytes, which is equal to
      * {@code (this.maxCapacity - this.writerIndex)}.
      */
@@ -466,7 +466,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      */
     public abstract ByteBuf clear();
 
-    /**
+    /** 保存readIndex指针
      * Marks the current {@code readerIndex} in this buffer.  You can
      * reposition the current {@code readerIndex} to the marked
      * {@code readerIndex} by calling {@link #resetReaderIndex()}.
@@ -474,7 +474,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      */
     public abstract ByteBuf markReaderIndex();
 
-    /**
+    /** 恢复保存的readIndex指针
      * Repositions the current {@code readerIndex} to the marked
      * {@code readerIndex} in this buffer.
      *
@@ -484,7 +484,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      */
     public abstract ByteBuf resetReaderIndex();
 
-    /**
+    /** 保存writeIndex指针
      * Marks the current {@code writerIndex} in this buffer.  You can
      * reposition the current {@code writerIndex} to the marked
      * {@code writerIndex} by calling {@link #resetWriterIndex()}.
@@ -492,7 +492,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      */
     public abstract ByteBuf markWriterIndex();
 
-    /**
+    /** 恢复保存的writeIndex指针
      * Repositions the current {@code writerIndex} to the marked
      * {@code writerIndex} in this buffer.
      *
@@ -975,7 +975,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      */
     public abstract CharSequence getCharSequence(int index, int length, Charset charset);
 
-    /**
+    /** set方法不会移动任何指针。（只是在当前位置进行覆盖而已）
      * Sets the specified boolean at the specified absolute {@code index} in this
      * buffer.
      * This method does not modify {@code readerIndex} or {@code writerIndex} of
@@ -1350,7 +1350,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      */
     public abstract int setCharSequence(int index, CharSequence sequence, Charset charset);
 
-    /**
+    /**从readIndex指针开始往后读1个字节
      * Gets a boolean at the current {@code readerIndex} and increases
      * the {@code readerIndex} by {@code 1} in this buffer.
      *
@@ -1359,7 +1359,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      */
     public abstract boolean readBoolean();
 
-    /**
+    /** 从readIndex指针开始往后读1个字节
      * Gets a byte at the current {@code readerIndex} and increases
      * the {@code readerIndex} by {@code 1} in this buffer.
      *
@@ -1377,7 +1377,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      */
     public abstract short readUnsignedByte();
 
-    /**
+    /** 从readIndex指针开始往后读2个字节
      * Gets a 16-bit short integer at the current {@code readerIndex}
      * and increases the {@code readerIndex} by {@code 2} in this buffer.
      *
@@ -1415,7 +1415,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      */
     public abstract int   readUnsignedShortLE();
 
-    /**
+    /**从readIndex指针开始往后读3个字节
      * Gets a 24-bit medium integer at the current {@code readerIndex}
      * and increases the {@code readerIndex} by {@code 3} in this buffer.
      *
@@ -1453,7 +1453,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      */
     public abstract int   readUnsignedMediumLE();
 
-    /**
+    /** 从readIndex指针开始往后读4个字节
      * Gets a 32-bit integer at the current {@code readerIndex}
      * and increases the {@code readerIndex} by {@code 4} in this buffer.
      *
@@ -1491,7 +1491,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      */
     public abstract long  readUnsignedIntLE();
 
-    /**
+    /**从readIndex指针开始往后读8个字节
      * Gets a 64-bit integer at the current {@code readerIndex}
      * and increases the {@code readerIndex} by {@code 8} in this buffer.
      *

@@ -137,7 +137,7 @@ public final class Unpooled {
         return ALLOC.heapBuffer(initialCapacity, maxCapacity);
     }
 
-    /**
+    /** 创建直接内存的Buffer
      * Creates a new big-endian direct buffer with the specified
      * {@code initialCapacity}, that may grow up to {@code maxCapacity}.
      * The new buffer's {@code readerIndex} and {@code writerIndex} are

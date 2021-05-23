@@ -42,7 +42,7 @@ final class PooledUnsafeHeapByteBuf extends PooledHeapByteBuf {
 
     @Override
     protected byte _getByte(int index) {
-        return UnsafeByteBufUtil.getByte(memory, idx(index));
+        return UnsafeByteBufUtil.getByte(memory, idx(index));// 直接通过内存获取到值
     }
 
     @Override

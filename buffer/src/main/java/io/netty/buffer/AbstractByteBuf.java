@@ -67,12 +67,12 @@ public abstract class AbstractByteBuf extends ByteBuf {
 
     static final ResourceLeakDetector<ByteBuf> leakDetector =
             ResourceLeakDetectorFactory.instance().newResourceLeakDetector(ByteBuf.class);
-
+    /************ 保存几个读写指针 ************/
     int readerIndex;
     int writerIndex;
     private int markedReaderIndex;
     private int markedWriterIndex;
-    private int maxCapacity;
+    private int maxCapacity; // 最大容量
 
     protected AbstractByteBuf(int maxCapacity) {
         checkPositiveOrZero(maxCapacity, "maxCapacity");
@@ -179,23 +179,23 @@ public abstract class AbstractByteBuf extends ByteBuf {
     }
 
     @Override
-    public int writableBytes() {
+    public int writableBytes() { // capacity-writerIndex
         return capacity() - writerIndex;
     }
 
     @Override
-    public int maxWritableBytes() {
+    public int maxWritableBytes() {// maxCapacity - writerIndex
         return maxCapacity() - writerIndex;
     }
 
     @Override
     public ByteBuf markReaderIndex() {
-        markedReaderIndex = readerIndex;
+        markedReaderIndex = readerIndex; // 当前的readerIndex保存到markedReaderIndex
         return this;
     }
 
     @Override
-    public ByteBuf resetReaderIndex() {
+    public ByteBuf resetReaderIndex() { // markedReaderIndex赋值给readerIndex
         readerIndex(markedReaderIndex);
         return this;
     }
@@ -352,11 +352,11 @@ public abstract class AbstractByteBuf extends ByteBuf {
 
     @Override
     public byte getByte(int index) {
-        checkIndex(index);
-        return _getByte(index);
+        checkIndex(index); // 检查当前指针是否合法的
+        return _getByte(index); // 然后获取该指针下的字节
     }
 
-    protected abstract byte _getByte(int index);
+    protected abstract byte _getByte(int index); // 抽象方法，由子类实现
 
     @Override
     public boolean getBoolean(int index) {
@@ -527,7 +527,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         return this;
     }
 
-    protected abstract void _setByte(int index, int value);
+    protected abstract void _setByte(int index, int value); // 抽象方法，由子类实现
 
     @Override
     public ByteBuf setBoolean(int index, boolean value) {
@@ -726,7 +726,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
     }
 
     @Override
-    public byte readByte() {
+    public byte readByte() { // 获取当前读指针位置的字节，然后读指针+1
         checkReadableBytes0(1);
         int i = readerIndex;
         byte b = _getByte(i);
@@ -980,9 +980,9 @@ public abstract class AbstractByteBuf extends ByteBuf {
     }
 
     @Override
-    public ByteBuf writeByte(int value) {
-        ensureWritable0(1);
-        _setByte(writerIndex++, value);
+    public ByteBuf writeByte(int value) { //
+        ensureWritable0(1); // 保证当前能写
+        _setByte(writerIndex++, value); // 字节写入到writerIndex位置，然后writerIndex+1
         return this;
     }
 

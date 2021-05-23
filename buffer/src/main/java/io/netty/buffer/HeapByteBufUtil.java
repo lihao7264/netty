@@ -20,7 +20,7 @@ package io.netty.buffer;
  */
 final class HeapByteBufUtil {
 
-    static byte getByte(byte[] memory, int index) {
+    static byte getByte(byte[] memory, int index) { // 直接调用一个数组，获取数组某个索引下的数据
         return memory[index];
     }
 

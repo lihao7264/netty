@@ -30,7 +30,7 @@ import java.nio.channels.ScatteringByteChannel;
 
 import static io.netty.util.internal.ObjectUtil.checkPositiveOrZero;
 
-/**
+/** 基于堆外内存
  * A NIO {@link ByteBuffer} based buffer. It is recommended to use
  * {@link UnpooledByteBufAllocator#directBuffer(int, int)}, {@link Unpooled#directBuffer(int)} and
  * {@link Unpooled#wrappedBuffer(ByteBuffer)} instead of calling the constructor explicitly.
@@ -38,7 +38,7 @@ import static io.netty.util.internal.ObjectUtil.checkPositiveOrZero;
 public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
 
     private final ByteBufAllocator alloc;
-
+    // 依赖于ByteBuff对象（底层对应jdk的DirectByteBuffer）
     ByteBuffer buffer; // accessed by UnpooledUnsafeNoCleanerDirectByteBuf.reallocateDirect()
     private ByteBuffer tmpNioBuf;
     private int capacity;
@@ -61,7 +61,7 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
         }
 
         this.alloc = alloc;
-        setByteBuffer(allocateDirect(initialCapacity), false);
+        setByteBuffer(allocateDirect(initialCapacity), false); // 设置ByteBuffer
     }
 
     /**
@@ -97,7 +97,7 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
         writerIndex(initialCapacity);
     }
 
-    /**
+    /** 用给定的initialCapacity分配一个新的直接内存的{@link ByteBuffer}。
      * Allocate a new direct {@link ByteBuffer} with the given initialCapacity.
      */
     protected ByteBuffer allocateDirect(int initialCapacity) {
@@ -204,7 +204,7 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
 
     @Override
     protected byte _getByte(int index) {
-        return buffer.get(index);
+        return buffer.get(index); // 调用DirectByteBuffer的get方法
     }
 
     @Override

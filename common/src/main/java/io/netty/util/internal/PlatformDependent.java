@@ -91,7 +91,7 @@ public final class PlatformDependent {
     private static final boolean MAYBE_SUPER_USER;
 
     private static final boolean CAN_ENABLE_TCP_NODELAY_BY_DEFAULT = !isAndroid(); // 如果是安卓系统，为false，否则，为true
-
+    // 如果在类路径中找到 {@code sun.misc.Unsafe} 并且可用于加速直接内存访问，则为null，否则为不可用原因。
     private static final Throwable UNSAFE_UNAVAILABILITY_CAUSE = unsafeUnavailabilityCause0();
     private static final boolean DIRECT_BUFFER_PREFERRED;
     private static final long MAX_DIRECT_MEMORY = maxDirectMemory0();
@@ -330,7 +330,7 @@ public final class PlatformDependent {
         return CAN_ENABLE_TCP_NODELAY_BY_DEFAULT;
     }
 
-    /**
+    /** 如果在类路径中找到 {@code sun.misc.Unsafe} 并且可用于加速直接内存访问，则返回 {@code true}。
      * Return {@code true} if {@code sun.misc.Unsafe} was found on the classpath and can be used for accelerated
      * direct memory access.
      */
@@ -1009,7 +1009,7 @@ public final class PlatformDependent {
         return hasUnsafe() ? new SpscLinkedQueue<T>() : new SpscLinkedAtomicQueue<T>();
     }
 
-    /**
+    /** 创建一个新的 {@link Queue}，它可以安全地用于多个生产者（不同线程）和一个 消费者（一个线程！），并具有给定的修复 {@code capacity}。
      * Create a new {@link Queue} which is safe to use for multiple producers (different threads) and a single
      * consumer (one thread!) with the given fixes {@code capacity}.
      */

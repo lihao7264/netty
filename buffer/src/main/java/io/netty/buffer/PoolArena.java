@@ -28,11 +28,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static io.netty.buffer.PoolChunk.isSubpage;
 import static java.lang.Math.max;
-
+// Arena可以理解为竞技场的意思
 abstract class PoolArena<T> extends SizeClasses implements PoolArenaMetric {
     static final boolean HAS_UNSAFE = PlatformDependent.hasUnsafe();
-
-    enum SizeClass {
+    // small <= 28672(28K) 、normal <= 16777216(16M)、huge > 16777216(16M)
+    enum SizeClass { // 缓存的类型
         Small,
         Normal
     }
@@ -66,7 +66,7 @@ abstract class PoolArena<T> extends SizeClasses implements PoolArenaMetric {
     private final LongCounter deallocationsHuge = PlatformDependent.newLongCounter();
 
     // Number of thread caches backed by this arena.
-    final AtomicInteger numThreadCaches = new AtomicInteger();
+    final AtomicInteger numThreadCaches = new AtomicInteger(); // 此 arena 支持的线程缓存数。
 
     // TODO: Test if adding padding helps under contention
     //private long pad0, pad1, pad2, pad3, pad4, pad5, pad6, pad7;
@@ -122,13 +122,13 @@ abstract class PoolArena<T> extends SizeClasses implements PoolArenaMetric {
     abstract boolean isDirect();
 
     PooledByteBuf<T> allocate(PoolThreadCache cache, int reqCapacity, int maxCapacity) {
-        PooledByteBuf<T> buf = newByteBuf(maxCapacity);
-        allocate(cache, buf, reqCapacity);
+        PooledByteBuf<T> buf = newByteBuf(maxCapacity); // 获取到一个PooledByteBuf
+        allocate(cache, buf, reqCapacity); // 在线程私有的PoolThreadCache上面进行分配
         return buf;
     }
 
     private void allocate(PoolThreadCache cache, PooledByteBuf<T> buf, final int reqCapacity) {
-        final int sizeIdx = size2SizeIdx(reqCapacity);
+        final int sizeIdx = size2SizeIdx(reqCapacity); //规格化
 
         if (sizeIdx <= smallMaxSizeIdx) {
             tcacheAllocateSmall(cache, buf, reqCapacity, sizeIdx);
@@ -178,11 +178,11 @@ abstract class PoolArena<T> extends SizeClasses implements PoolArenaMetric {
 
     private void tcacheAllocateNormal(PoolThreadCache cache, PooledByteBuf<T> buf, final int reqCapacity,
                                       final int sizeIdx) {
-        if (cache.allocateNormal(this, buf, reqCapacity, sizeIdx)) {
+        if (cache.allocateNormal(this, buf, reqCapacity, sizeIdx)) { // 在缓存上进行内存分配
             // was able to allocate out of the cache so move on
-            return;
+            return; // 在缓存上内存分配成功，则返回
         }
-        synchronized (this) {
+        synchronized (this) { // 如果缓存上没有内存分配成功，则进行实际的内存分配（从内存堆里面进行内存分配）
             allocateNormal(buf, reqCapacity, sizeIdx, cache);
             ++allocationsNormal;
         }
@@ -643,7 +643,7 @@ abstract class PoolArena<T> extends SizeClasses implements PoolArenaMetric {
 
         @Override
         protected PooledByteBuf<ByteBuffer> newByteBuf(int maxCapacity) {
-            if (HAS_UNSAFE) {
+            if (HAS_UNSAFE) {// 是否支持UNSAFE
                 return PooledUnsafeDirectByteBuf.newInstance(maxCapacity);
             } else {
                 return PooledDirectByteBuf.newInstance(maxCapacity);

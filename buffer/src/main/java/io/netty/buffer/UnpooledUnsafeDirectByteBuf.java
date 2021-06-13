@@ -29,7 +29,7 @@ import java.nio.ByteBuffer;
  */
 public class UnpooledUnsafeDirectByteBuf extends UnpooledDirectByteBuf {
 
-    long memoryAddress;
+    long memoryAddress; // ByteBuffer的内存地址
 
     /**
      * Creates a new direct buffer.
@@ -65,8 +65,8 @@ public class UnpooledUnsafeDirectByteBuf extends UnpooledDirectByteBuf {
 
     @Override
     final void setByteBuffer(ByteBuffer buffer, boolean tryFree) {
-        super.setByteBuffer(buffer, tryFree);
-        memoryAddress = PlatformDependent.directBufferAddress(buffer);
+        super.setByteBuffer(buffer, tryFree); // 设置DirectByteBuffer
+        memoryAddress = PlatformDependent.directBufferAddress(buffer); // 计算出DirectByteBuffer的内存地址，保存该内存地址到memoryAddress
     }
 
     @Override
@@ -285,7 +285,7 @@ public class UnpooledUnsafeDirectByteBuf extends UnpooledDirectByteBuf {
     }
 
     final long addr(int index) {
-        return memoryAddress + index;
+        return memoryAddress + index; // DirectByteBuffer的内存地址+下标 = 需要获取的数据的真实内存地址
     }
 
     @Override

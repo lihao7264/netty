@@ -32,13 +32,13 @@ public abstract class ObjectPool<T> {
      */
     public abstract T get();
 
-    /**
+    /** 池化 {@link Object} 的句柄，一旦它可以再次重用池化 {@link Object}，将用于通知 {@link ObjectPool}。 ---- 负责回收
      * Handle for an pooled {@link Object} that will be used to notify the {@link ObjectPool} once it can
      * reuse the pooled {@link Object} again.
      * @param <T>
      */
     public interface Handle<T> {
-        /**
+        /** 如果可能，请回收 {@link Object}，使其准备好重新使用。  ---- 回收方法
          * Recycle the {@link Object} if possible and so make it ready to be reused.
          */
         void recycle(T self);

@@ -71,14 +71,14 @@ abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
         this.maxLength = maxLength;
     }
 
-    /**
+    /** 在重用此 {@link PooledByteBufAllocator} 之前必须调用方法
      * Method must be called before reuse this {@link PooledByteBufAllocator}
      */
     final void reuse(int maxCapacity) {
-        maxCapacity(maxCapacity);
-        resetRefCnt();
-        setIndex0(0, 0);
-        discardMarks();
+        maxCapacity(maxCapacity); // 设置最大容量
+        resetRefCnt(); // ByteBuf被引用数设置为1
+        setIndex0(0, 0); // 读写指针重置为0
+        discardMarks(); //读写指针标记重置为0
     }
 
     @Override

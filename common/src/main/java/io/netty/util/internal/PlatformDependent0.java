@@ -549,7 +549,7 @@ final class PlatformDependent0 {
     }
 
     private static long getLong(Object object, long fieldOffset) {
-        return UNSAFE.getLong(object, fieldOffset);
+        return UNSAFE.getLong(object, fieldOffset);// 通过Unsafe去获取某个对象的内存地址
     }
 
     static long objectFieldOffset(Field field) {
@@ -557,7 +557,7 @@ final class PlatformDependent0 {
     }
 
     static byte getByte(long address) {
-        return UNSAFE.getByte(address);
+        return UNSAFE.getByte(address); // 直接可以获取到某块内存地址的byte是什么
     }
 
     static short getShort(long address) {
@@ -573,7 +573,7 @@ final class PlatformDependent0 {
     }
 
     static byte getByte(byte[] data, int index) {
-        return UNSAFE.getByte(data, BYTE_ARRAY_BASE_OFFSET + index); // 通过UnSafe对象进行getByte
+        return UNSAFE.getByte(data, BYTE_ARRAY_BASE_OFFSET + index); // 通过UnSafe对象+具体被操作的对象+偏移量（基础偏移量+下标） 进行getByte
     }
 
     static byte getByte(byte[] data, long index) {

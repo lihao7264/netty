@@ -23,14 +23,14 @@ import io.netty.util.ResourceLeakTracker;
 import io.netty.util.internal.PlatformDependent;
 import io.netty.util.internal.StringUtil;
 
-/**
+/** 扩展{@link ByteBufAllocator}基础接口的实现。
  * Skeletal {@link ByteBufAllocator} implementation to extend.
  */
 public abstract class AbstractByteBufAllocator implements ByteBufAllocator {
     static final int DEFAULT_INITIAL_CAPACITY = 256;
     static final int DEFAULT_MAX_CAPACITY = Integer.MAX_VALUE;
     static final int DEFAULT_MAX_COMPONENTS = 16;
-    static final int CALCULATE_THRESHOLD = 1048576 * 4; // 4 MiB page
+    static final int CALCULATE_THRESHOLD = 1048576 * 4; // 4 MiB page （4MB 页）
 
     static {
         ResourceLeakDetector.addExclusions(AbstractByteBufAllocator.class, "toLeakAwareBuffer");
@@ -80,7 +80,7 @@ public abstract class AbstractByteBufAllocator implements ByteBufAllocator {
         return buf;
     }
 
-    private final boolean directByDefault;
+    private final boolean directByDefault; // 默认是不是优先创建 DirectBuffer
     private final ByteBuf emptyBuf;
 
     /**
@@ -100,7 +100,7 @@ public abstract class AbstractByteBufAllocator implements ByteBufAllocator {
         directByDefault = preferDirect && PlatformDependent.hasUnsafe();
         emptyBuf = new EmptyByteBuf(this);
     }
-
+    // 如果默认是 DirectBuffer，就分配DirectBuffer，否则就分配 HeapBuffer
     @Override
     public ByteBuf buffer() {
         if (directByDefault) {
@@ -170,7 +170,7 @@ public abstract class AbstractByteBufAllocator implements ByteBufAllocator {
 
     @Override
     public ByteBuf directBuffer() {
-        return directBuffer(DEFAULT_INITIAL_CAPACITY, DEFAULT_MAX_CAPACITY);
+        return directBuffer(DEFAULT_INITIAL_CAPACITY, DEFAULT_MAX_CAPACITY); // Buffer的默认容量和最大容量
     }
 
     @Override
@@ -180,7 +180,7 @@ public abstract class AbstractByteBufAllocator implements ByteBufAllocator {
 
     @Override
     public ByteBuf directBuffer(int initialCapacity, int maxCapacity) {
-        if (initialCapacity == 0 && maxCapacity == 0) {
+        if (initialCapacity == 0 && maxCapacity == 0) { // 参数验证
             return emptyBuf;
         }
         validate(initialCapacity, maxCapacity);
@@ -232,12 +232,12 @@ public abstract class AbstractByteBufAllocator implements ByteBufAllocator {
         }
     }
 
-    /**
+    /**  使用给定的initialCapacity 和maxCapacity 创建一个堆{@link ByteBuf}。（HeapBuffer）
      * Create a heap {@link ByteBuf} with the given initialCapacity and maxCapacity.
      */
     protected abstract ByteBuf newHeapBuffer(int initialCapacity, int maxCapacity);
 
-    /**
+    /** 使用给定的 initialCapacity 和 maxCapacity 创建一个直接的 {@link ByteBuf}。（DirectBuffer）
      * Create a direct {@link ByteBuf} with the given initialCapacity and maxCapacity.
      */
     protected abstract ByteBuf newDirectBuffer(int initialCapacity, int maxCapacity);

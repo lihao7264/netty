@@ -143,7 +143,7 @@ public abstract class AbstractByteBuf extends ByteBuf {
         if (checkBounds) {
             checkIndexBounds(readerIndex, writerIndex, capacity());
         }
-        setIndex0(readerIndex, writerIndex);
+        setIndex0(readerIndex, writerIndex); // 保存读写指针
         return this;
     }
 

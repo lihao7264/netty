@@ -15,7 +15,7 @@
  */
 package io.netty.buffer;
 
-/**
+/** 内存管理器最顶层的抽象（ByteBufAllocator） -- 实现负责分配缓冲区。这个接口的实现应该是线程安全的。
  * Implementations are responsible to allocate buffers. Implementations of this interface are expected to be
  * thread-safe.
  */
@@ -89,7 +89,7 @@ public interface ByteBufAllocator {
      */
     ByteBuf directBuffer(int initialCapacity, int maxCapacity);
 
-    /**
+    /** 如果是直接缓冲区还是堆缓冲区取决于实际实现。
      * Allocate a {@link CompositeByteBuf}.
      * If it is a direct or heap buffer depends on the actual implementation.
      */

@@ -51,7 +51,7 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
      * @param maxCapacity     the maximum capacity of the underlying direct buffer
      */
     public UnpooledDirectByteBuf(ByteBufAllocator alloc, int initialCapacity, int maxCapacity) {
-        super(maxCapacity);
+        super(maxCapacity); // 设置最大容量
         ObjectUtil.checkNotNull(alloc, "alloc");
         checkPositiveOrZero(initialCapacity, "initialCapacity");
         checkPositiveOrZero(maxCapacity, "maxCapacity");
@@ -60,8 +60,8 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
                     "initialCapacity(%d) > maxCapacity(%d)", initialCapacity, maxCapacity));
         }
 
-        this.alloc = alloc;
-        setByteBuffer(allocateDirect(initialCapacity), false); // 设置ByteBuffer
+        this.alloc = alloc; // 设置内存分配器
+        setByteBuffer(allocateDirect(initialCapacity), false); // 设置DirectByteBuffer
     }
 
     /**
@@ -101,7 +101,7 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
      * Allocate a new direct {@link ByteBuffer} with the given initialCapacity.
      */
     protected ByteBuffer allocateDirect(int initialCapacity) {
-        return ByteBuffer.allocateDirect(initialCapacity);
+        return ByteBuffer.allocateDirect(initialCapacity);// 创建一个初始容量的DirectByteBuffer
     }
 
     /**

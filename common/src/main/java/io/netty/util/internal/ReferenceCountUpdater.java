@@ -99,7 +99,7 @@ public abstract class ReferenceCountUpdater<T extends ReferenceCounted> {
         updater().set(instance, refCnt > 0 ? refCnt << 1 : 1); // overflow OK here
     }
 
-    /**
+    /** 将引用计数重置为 1
      * Resets the reference count to 1
      */
     public final void resetRefCnt(T instance) {

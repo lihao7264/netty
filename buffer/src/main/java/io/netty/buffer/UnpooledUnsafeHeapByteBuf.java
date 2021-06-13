@@ -24,7 +24,7 @@ import io.netty.util.internal.PlatformDependent;
  */
 public class UnpooledUnsafeHeapByteBuf extends UnpooledHeapByteBuf {
 
-    /**
+    /** 使用新分配的字节数组创建新的堆缓冲区。
      * Creates a new heap buffer with a newly allocated byte array.
      *
      * @param initialCapacity the initial capacity of the underlying byte array

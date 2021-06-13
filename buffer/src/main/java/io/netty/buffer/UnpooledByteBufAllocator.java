@@ -30,17 +30,17 @@ public final class UnpooledByteBufAllocator extends AbstractByteBufAllocator imp
     private final boolean disableLeakDetector;
     private final boolean noCleaner;
 
-    /**
+    /** 对直接缓冲区使用泄漏检测的默认实例
      * Default instance which uses leak-detection for direct buffers.
      */
     public static final UnpooledByteBufAllocator DEFAULT =
             new UnpooledByteBufAllocator(PlatformDependent.directBufferPreferred());
 
-    /**
+    /** 创建一个对直接缓冲区使用泄漏检测的新实例。
      * Create a new instance which uses leak-detection for direct buffers.
      *
      * @param preferDirect {@code true} if {@link #buffer(int)} should try to allocate a direct buffer rather than
-     *                     a heap buffer
+     *                     a heap buffer {@code true} 如果 {@link #buffer(int)} 应该尝试分配直接缓冲区而不是堆缓冲区
      */
     public UnpooledByteBufAllocator(boolean preferDirect) {
         this(preferDirect, false);
@@ -79,15 +79,15 @@ public final class UnpooledByteBufAllocator extends AbstractByteBufAllocator imp
 
     @Override
     protected ByteBuf newHeapBuffer(int initialCapacity, int maxCapacity) {
-        return PlatformDependent.hasUnsafe() ?
-                new InstrumentedUnpooledUnsafeHeapByteBuf(this, initialCapacity, maxCapacity) :
-                new InstrumentedUnpooledHeapByteBuf(this, initialCapacity, maxCapacity);
+        return PlatformDependent.hasUnsafe() ? // 判断是否包含Unsafe对象,创建包含三个具体维度的ByteBuf
+                new InstrumentedUnpooledUnsafeHeapByteBuf(this, initialCapacity, maxCapacity) : // 三个维度是（Unpooled Unsafe Heap）
+                new InstrumentedUnpooledHeapByteBuf(this, initialCapacity, maxCapacity); // 三个维度是（Unpooled Safe Heap）
     }
-
+    // 创建 DirectBuffer
     @Override
     protected ByteBuf newDirectBuffer(int initialCapacity, int maxCapacity) {
         final ByteBuf buf;
-        if (PlatformDependent.hasUnsafe()) {
+        if (PlatformDependent.hasUnsafe()) { //  判断是否包含Unsafe对象,创建包含三个具体维度的ByteBuf
             buf = noCleaner ? new InstrumentedUnpooledUnsafeNoCleanerDirectByteBuf(this, initialCapacity, maxCapacity) :
                     new InstrumentedUnpooledUnsafeDirectByteBuf(this, initialCapacity, maxCapacity);
         } else {

@@ -38,7 +38,7 @@ import java.util.concurrent.TimeUnit;
 public class PooledByteBufAllocator extends AbstractByteBufAllocator implements ByteBufAllocatorMetricProvider {
 
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(PooledByteBufAllocator.class);
-    private static final int DEFAULT_NUM_HEAP_ARENA;
+    private static final int DEFAULT_NUM_HEAP_ARENA; // 默认的HeapArena数量
     private static final int DEFAULT_NUM_DIRECT_ARENA;
 
     private static final int DEFAULT_PAGE_SIZE;
@@ -53,7 +53,7 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
     static final int DEFAULT_MAX_CACHED_BYTEBUFFERS_PER_CHUNK;
 
     private static final int MIN_PAGE_SIZE = 4096;
-    private static final int MAX_CHUNK_SIZE = (int) (((long) Integer.MAX_VALUE + 1) / 2);
+    private static final int MAX_CHUNK_SIZE = (int) (((long) Integer.MAX_VALUE + 1) / 2); // Integer最大值+1 除以2
 
     private final Runnable trimTask = new Runnable() {
         @Override
@@ -97,31 +97,31 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
          * allocation and de-allocation needs to be synchronized on the PoolArena.
          *
          * See https://github.com/netty/netty/issues/3888.
-         */
-        final int defaultMinNumArena = NettyRuntime.availableProcessors() * 2;
+         */// 下面就是创建堆和堆外的Arena数组大小（默认2倍cpu核数的Arena，Nio线程也是默认的2倍cpu核数的线程，也就是每个线程都会有自己独享的Arena）
+        final int defaultMinNumArena = NettyRuntime.availableProcessors() * 2; // 2倍的cpu的核数
         final int defaultChunkSize = DEFAULT_PAGE_SIZE << DEFAULT_MAX_ORDER;
         DEFAULT_NUM_HEAP_ARENA = Math.max(0,
                 SystemPropertyUtil.getInt(
                         "io.netty.allocator.numHeapArenas",
                         (int) Math.min(
                                 defaultMinNumArena,
-                                runtime.maxMemory() / defaultChunkSize / 2 / 3)));
+                                runtime.maxMemory() / defaultChunkSize / 2 / 3)));// 一般情况下，defaultMinNumArena小于后面的值
         DEFAULT_NUM_DIRECT_ARENA = Math.max(0,
                 SystemPropertyUtil.getInt(
                         "io.netty.allocator.numDirectArenas",
                         (int) Math.min(
                                 defaultMinNumArena,
-                                PlatformDependent.maxDirectMemory() / defaultChunkSize / 2 / 3)));
+                                PlatformDependent.maxDirectMemory() / defaultChunkSize / 2 / 3)));// 一般情况下，defaultMinNumArena小于后面的值
 
         // cache sizes
-        DEFAULT_SMALL_CACHE_SIZE = SystemPropertyUtil.getInt("io.netty.allocator.smallCacheSize", 256);
-        DEFAULT_NORMAL_CACHE_SIZE = SystemPropertyUtil.getInt("io.netty.allocator.normalCacheSize", 64);
-
+        DEFAULT_SMALL_CACHE_SIZE = SystemPropertyUtil.getInt("io.netty.allocator.smallCacheSize", 256); // 256
+        DEFAULT_NORMAL_CACHE_SIZE = SystemPropertyUtil.getInt("io.netty.allocator.normalCacheSize", 64); // 64
+        //  32 kb 是缓存缓冲区的默认最大容量。类似于中解释的'使用 jemalloc 的可扩展内存分配'
         // 32 kb is the default maximum capacity of the cached buffer. Similar to what is explained in
         // 'Scalable memory allocation using jemalloc'
         DEFAULT_MAX_CACHED_BUFFER_CAPACITY = SystemPropertyUtil.getInt(
                 "io.netty.allocator.maxCachedBufferCapacity", 32 * 1024);
-
+        // 如果不经常使用缓存条目将被释放时的分配阈值数量
         // the number of threshold of allocations when cached entries will be freed up if not frequently used
         DEFAULT_CACHE_TRIM_INTERVAL = SystemPropertyUtil.getInt(
                 "io.netty.allocator.cacheTrimInterval", 8192);
@@ -181,11 +181,11 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
 
     private final PoolArena<byte[]>[] heapArenas;
     private final PoolArena<ByteBuffer>[] directArenas;
-    private final int smallCacheSize;
-    private final int normalCacheSize;
+    private final int smallCacheSize; //
+    private final int normalCacheSize; //
     private final List<PoolArenaMetric> heapArenaMetrics;
     private final List<PoolArenaMetric> directArenaMetrics;
-    private final PoolThreadLocalCache threadCache;
+    private final PoolThreadLocalCache threadCache; // 不同线程 有 不同的变量
     private final int chunkSize;
     private final PooledByteBufAllocatorMetric metric;
 
@@ -259,7 +259,7 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
              smallCacheSize, normalCacheSize,
              useCacheForAllThreads, directMemoryCacheAlignment);
     }
-
+    // 内存构造器的构造函数
     public PooledByteBufAllocator(boolean preferDirect, int nHeapArena, int nDirectArena, int pageSize, int maxOrder,
                                   int smallCacheSize, int normalCacheSize,
                                   boolean useCacheForAllThreads, int directMemoryCacheAlignment) {
@@ -295,13 +295,13 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
 
         int pageShifts = validateAndCalculatePageShifts(pageSize, directMemoryCacheAlignment);
 
-        if (nHeapArena > 0) {
-            heapArenas = newArenaArray(nHeapArena);
+        if (nHeapArena > 0) { // 堆Arena
+            heapArenas = newArenaArray(nHeapArena); // 创建heapArenas
             List<PoolArenaMetric> metrics = new ArrayList<PoolArenaMetric>(heapArenas.length);
             for (int i = 0; i < heapArenas.length; i ++) {
                 PoolArena.HeapArena arena = new PoolArena.HeapArena(this,
                         pageSize, pageShifts, chunkSize,
-                        directMemoryCacheAlignment);
+                        directMemoryCacheAlignment); // 创建PoolArena.HeapArena
                 heapArenas[i] = arena;
                 metrics.add(arena);
             }
@@ -311,12 +311,12 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
             heapArenaMetrics = Collections.emptyList();
         }
 
-        if (nDirectArena > 0) {
+        if (nDirectArena > 0) { // 堆外Arena
             directArenas = newArenaArray(nDirectArena);
             List<PoolArenaMetric> metrics = new ArrayList<PoolArenaMetric>(directArenas.length);
             for (int i = 0; i < directArenas.length; i ++) {
                 PoolArena.DirectArena arena = new PoolArena.DirectArena(
-                        this, pageSize, pageShifts, chunkSize, directMemoryCacheAlignment);
+                        this, pageSize, pageShifts, chunkSize, directMemoryCacheAlignment);// 创建PoolArena.DirectArena
                 directArenas[i] = arena;
                 metrics.add(arena);
             }
@@ -329,7 +329,7 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> PoolArena<T>[] newArenaArray(int size) {
+    private static <T> PoolArena<T>[] newArenaArray(int size) {// 创建一个PoolArena的数组
         return new PoolArena[size];
     }
 
@@ -387,7 +387,7 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
 
     @Override
     protected ByteBuf newDirectBuffer(int initialCapacity, int maxCapacity) {
-        PoolThreadCache cache = threadCache.get();
+        PoolThreadCache cache = threadCache.get(); //拿到线程（当前线程的）局部缓存PoolThreadCache：不同线程可以在不同堆栈进行内存分配
         PoolArena<ByteBuffer> directArena = cache.directArena;
 
         final ByteBuf buf;
@@ -489,33 +489,33 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
         return threadCache.isSet();
     }
 
-    /**
+    /** 为调用 {@link Thread} 释放所有缓存的缓冲区。
      * Free all cached buffers for the calling {@link Thread}.
      */
     @Deprecated
     public void freeThreadLocalCache() {
         threadCache.remove();
     }
-
-    final class PoolThreadLocalCache extends FastThreadLocal<PoolThreadCache> {
+    // 博客列表：https://blog.csdn.net/wangwei19871103/article/details/104381851、https://blog.csdn.net/wangwei19871103/article/details/104393301
+    final class PoolThreadLocalCache extends FastThreadLocal<PoolThreadCache> { // PoolThreadLocalCache是继承自FastThreadLocal的子类，里面存的类型才是PoolThreadCache。
         private final boolean useCacheForAllThreads;
 
         PoolThreadLocalCache(boolean useCacheForAllThreads) {
             this.useCacheForAllThreads = useCacheForAllThreads;
         }
-
+        // 获取初始化值的，也就是创建PoolThreadCache并返回
         @Override
-        protected synchronized PoolThreadCache initialValue() {
-            final PoolArena<byte[]> heapArena = leastUsedArena(heapArenas);
-            final PoolArena<ByteBuffer> directArena = leastUsedArena(directArenas);
-
+        protected synchronized PoolThreadCache initialValue() { // 每个线程都会有自己的PoolThreadCache（也就是PoolThreadCache只会被一个线程使用）
+            final PoolArena<byte[]> heapArena = leastUsedArena(heapArenas); // 堆 ---- 获取使用率最少的一个
+            final PoolArena<ByteBuffer> directArena = leastUsedArena(directArenas); // 堆外 ---- 获取使用率最少的一个
+            // 主要是useCacheForAllThreads 标签，是否是所有线程都可以用缓存，还是只能FastThreadLocalThread用缓存。
             final Thread current = Thread.currentThread();
-            if (useCacheForAllThreads || current instanceof FastThreadLocalThread) {
+            if (useCacheForAllThreads || current instanceof FastThreadLocalThread) { //使用了useCacheForAllThreads或者是FastThreadLocalThread线程
                 final PoolThreadCache cache = new PoolThreadCache(
                         heapArena, directArena, smallCacheSize, normalCacheSize,
                         DEFAULT_MAX_CACHED_BUFFER_CAPACITY, DEFAULT_CACHE_TRIM_INTERVAL);
-
-                if (DEFAULT_CACHE_TRIM_INTERVAL_MILLIS > 0) {
+                // 当然如果有调度参数，可能还要启动调度任务
+                if (DEFAULT_CACHE_TRIM_INTERVAL_MILLIS > 0) { // //有间隔的调度任务
                     final EventExecutor executor = ThreadExecutorMap.currentExecutor();
                     if (executor != null) {
                         executor.scheduleAtFixedRate(trimTask, DEFAULT_CACHE_TRIM_INTERVAL_MILLIS,
@@ -524,7 +524,7 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
                 }
                 return cache;
             }
-            // No caching so just use 0 as sizes.
+            // No caching so just use 0 as sizes. 没有缓存，所以只使用 0 作为大小。
             return new PoolThreadCache(heapArena, directArena, 0, 0, 0, 0);
         }
 
@@ -532,7 +532,7 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
         protected void onRemoval(PoolThreadCache threadCache) {
             threadCache.free(false);
         }
-
+        // 获取线程使用数量最少的PoolArena，这样才能实现线程对内存的负载均衡，否则一个内存被多个线程用，其他的内存没有线程用，那使用效率就低了，还会引起严重的线程竞争问题
         private <T> PoolArena<T> leastUsedArena(PoolArena<T>[] arenas) {
             if (arenas == null || arenas.length == 0) {
                 return null;
@@ -541,7 +541,7 @@ public class PooledByteBufAllocator extends AbstractByteBufAllocator implements 
             PoolArena<T> minArena = arenas[0];
             for (int i = 1; i < arenas.length; i++) {
                 PoolArena<T> arena = arenas[i];
-                if (arena.numThreadCaches.get() < minArena.numThreadCaches.get()) {
+                if (arena.numThreadCaches.get() < minArena.numThreadCaches.get()) { // 比较arena的线程缓存数，获取使用率最低的arena
                     minArena = arena;
                 }
             }

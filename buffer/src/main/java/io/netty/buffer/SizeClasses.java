@@ -305,7 +305,7 @@ abstract class SizeClasses implements SizeClassesMetric {
         if (size == 0) {
             return 0;
         }
-        if (size > chunkSize) {
+        if (size > chunkSize) { // 如果大于chunkSize，则直接返回
             return nSizes;
         }
 
@@ -313,7 +313,7 @@ abstract class SizeClasses implements SizeClassesMetric {
             size = alignSize(size);
         }
 
-        if (size <= lookupMaxSize) {
+        if (size <= lookupMaxSize) { //
             //size-1 / MIN_TINY
             return size2idxTab[size - 1 >> LOG2_QUANTUM];
         }

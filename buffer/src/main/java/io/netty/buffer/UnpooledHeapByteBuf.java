@@ -48,16 +48,16 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
      * @param maxCapacity the max capacity of the underlying byte array
      */
     public UnpooledHeapByteBuf(ByteBufAllocator alloc, int initialCapacity, int maxCapacity) {
-        super(maxCapacity);
+        super(maxCapacity); // 设置最大容量
 
         if (initialCapacity > maxCapacity) {
             throw new IllegalArgumentException(String.format(
                     "initialCapacity(%d) > maxCapacity(%d)", initialCapacity, maxCapacity));
         }
 
-        this.alloc = checkNotNull(alloc, "alloc");
-        setArray(allocateArray(initialCapacity));
-        setIndex(0, 0);
+        this.alloc = checkNotNull(alloc, "alloc"); // 设置内存分配器
+        setArray(allocateArray(initialCapacity)); // 设置初始容量的数组
+        setIndex(0, 0); // 设置读写指针
     }
 
     /**
@@ -82,7 +82,7 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
     }
 
     protected byte[] allocateArray(int initialCapacity) {
-        return new byte[initialCapacity];
+        return new byte[initialCapacity]; // new 一个容量的数组
     }
 
     protected void freeArray(byte[] array) {
@@ -329,7 +329,7 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
     }
 
     @Override
-    protected byte _getByte(int index) {
+    protected byte _getByte(int index) { // 获取某个字节
         return HeapByteBufUtil.getByte(array, index);
     }
 

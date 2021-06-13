@@ -228,7 +228,7 @@ final class UnsafeByteBufUtil {
     }
 
     static byte getByte(byte[] array, int index) {
-        return PlatformDependent.getByte(array, index);
+        return PlatformDependent.getByte(array, index); // 通过Unsafe的方式获取数据
     }
 
     static short getShort(byte[] array, int index) {

@@ -30,14 +30,14 @@ final class PooledUnsafeDirectByteBuf extends PooledByteBuf<ByteBuffer> {
     private static final ObjectPool<PooledUnsafeDirectByteBuf> RECYCLER = ObjectPool.newPool(
             new ObjectCreator<PooledUnsafeDirectByteBuf>() {
         @Override
-        public PooledUnsafeDirectByteBuf newObject(Handle<PooledUnsafeDirectByteBuf> handle) {
-            return new PooledUnsafeDirectByteBuf(handle, 0);
+        public PooledUnsafeDirectByteBuf newObject(Handle<PooledUnsafeDirectByteBuf> handle) { // 通过PooledUnsafeDirectByteBuf的方式创建一个ByteBuf
+            return new PooledUnsafeDirectByteBuf(handle, 0); // handle主要是负责ByteBuf的回收
         }
-    });
+    }); // 回收利用的对象池
 
     static PooledUnsafeDirectByteBuf newInstance(int maxCapacity) {
-        PooledUnsafeDirectByteBuf buf = RECYCLER.get();
-        buf.reuse(maxCapacity);
+        PooledUnsafeDirectByteBuf buf = RECYCLER.get();// 通过RECYCLER获取一个Buf（如果回收对象池中没有ByteBuf的话，则创建一个，否则，直接拿出）
+        buf.reuse(maxCapacity); // 复用ByteBuf（重置读写指针、读写指针marked、最大容量、被引用数）
         return buf;
     }
 

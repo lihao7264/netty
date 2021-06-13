@@ -68,7 +68,7 @@ public abstract class AbstractReferenceCountedByteBuf extends AbstractByteBuf {
         updater.setRefCnt(this, refCnt);
     }
 
-    /**
+    /** 供子类使用的不安全操作，它将缓冲区的引用计数重置为 1
      * An unsafe operation intended for use by a subclass that resets the reference count of the buffer to 1
      */
     protected final void resetRefCnt() {

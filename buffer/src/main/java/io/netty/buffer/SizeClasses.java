@@ -52,7 +52,7 @@ import static io.netty.buffer.PoolThreadCache.*;
  *   split between group and delta*nDelta.
  *
  *   If pageShift = 13, sizeClasses looks like this:
- *
+ *           log2Group：内存块分组 、nDelta：增量乘数、log2Delta：增量大小的log2值
  *   (index, log2Group, log2Delta, nDelta, isMultiPageSize, isSubPage, log2DeltaLookup)
  * <p>
  *   ( 0,     4,        4,         0,       no,             yes,        4)
@@ -77,7 +77,7 @@ import static io.netty.buffer.PoolThreadCache.*;
  *   ( 75,    23,       21,        4,       yes,            no,        no)
  * <p>
  *   ( 76,    24,       22,        1,       yes,            no,        no)
- */
+ */ // sizeClasses是表示对于内存池中分配的内存大小需要对齐的size，在jemalloc论文中将其分为了三块,分别为Small,Large和Huge。其中Small和Large是在Arena中分配的，而Huge则是直接在Arena之外进行分配的。（参考博客：https://blog.csdn.net/cq_pf/article/details/107767775）
 abstract class SizeClasses implements SizeClassesMetric {
 
     static final int LOG2_QUANTUM = 4;
@@ -178,7 +178,7 @@ abstract class SizeClasses implements SizeClassesMetric {
         //return number of size index
         return index;
     }
-
+    // size =（ 1 << log2Group ） + nDelta * (1 << log2Delta) 、log2Group：内存块分组 、nDelta：增量乘数、log2Delta：增量大小的log2值
     //calculate size class
     private int sizeClass(int index, int log2Group, int log2Delta, int nDelta) {
         short isMultiPageSize;
@@ -186,7 +186,7 @@ abstract class SizeClasses implements SizeClassesMetric {
             isMultiPageSize = yes;
         } else {
             int pageSize = 1 << pageShifts;
-            int size = (1 << log2Group) + (1 << log2Delta) * nDelta;
+            int size = (1 << log2Group) + (1 << log2Delta) * nDelta; // 1 << log2Group = 1 左移4位 =1*2的4次幂
 
             isMultiPageSize = size == size / pageSize * pageSize? yes : no;
         }
@@ -305,11 +305,11 @@ abstract class SizeClasses implements SizeClassesMetric {
         if (size == 0) {
             return 0;
         }
-        if (size > chunkSize) { // 如果大于chunkSize，则直接返回
+        if (size > chunkSize) { // 1\大于chunkSize，就是返回nSizes代表申请的是Huge内存块。
             return nSizes;
         }
 
-        if (directMemoryCacheAlignment > 0) {
+        if (directMemoryCacheAlignment > 0) { // 不使用sizeClasses表格，直接将申请内存大小转换为directMemoryCacheAlignment的倍数，directMemoryCacheAlignment默认为0。
             size = alignSize(size);
         }
 

@@ -38,7 +38,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
-/**
+/** 参考博客：https://blog.csdn.net/mrathena/article/details/113102800
  * {@link Bootstrap} sub-class which allows easy bootstrap of {@link ServerChannel}
  *
  */

@@ -21,24 +21,24 @@ import static io.netty.buffer.PoolChunk.SIZE_SHIFT;
 import static io.netty.buffer.PoolChunk.IS_USED_SHIFT;
 import static io.netty.buffer.PoolChunk.IS_SUBPAGE_SHIFT;
 import static io.netty.buffer.SizeClasses.LOG2_QUANTUM;
-
+// 在小内存分配的场景下，即分配的内存大小小于一个 Page 8K，会使用 PoolSubpage 进行管理
 final class PoolSubpage<T> implements PoolSubpageMetric {
 
     final PoolChunk<T> chunk;
     private final int pageShifts;
-    private final int runOffset;
+    private final int runOffset;  // PoolSubpage 在 PoolChunk 中 memory 的偏移量
     private final int runSize;
-    private final long[] bitmap;
-
+    private final long[] bitmap; // 记录每个小内存块的状态
+    // 与 PoolArena 中 tinySubpagePools 或 smallSubpagePools 中元素连接成双向链表
     PoolSubpage<T> prev;
     PoolSubpage<T> next;
 
     boolean doNotDestroy;
-    int elemSize;
-    private int maxNumElems;
+    int elemSize; // 每个小内存块的大小
+    private int maxNumElems;  // 最多可以存放多少小内存块：8K/elemSize
     private int bitmapLength;
     private int nextAvail;
-    private int numAvail;
+    private int numAvail;  // 可用于分配的内存块个数
 
     // TODO: Test if adding padding helps under contention
     //private long pad0, pad1, pad2, pad3, pad4, pad5, pad6, pad7;

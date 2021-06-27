@@ -35,7 +35,7 @@ public interface ReferenceCounted {
      */
     int refCnt();
 
-    /**
+    /** 引用计数加 1
      * Increases the reference count by {@code 1}.
      */
     ReferenceCounted retain();
@@ -59,7 +59,7 @@ public interface ReferenceCounted {
      */
     ReferenceCounted touch(Object hint);
 
-    /**
+    /**  引用计数减 1
      * Decreases the reference count by {@code 1} and deallocates this object if the reference count reaches at
      * {@code 0}.
      *

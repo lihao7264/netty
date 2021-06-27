@@ -194,7 +194,7 @@ abstract class PoolArena<T> extends SizeClasses implements PoolArenaMetric {
             q025.allocate(buf, reqCapacity, sizeIdx, threadCache) ||
             q000.allocate(buf, reqCapacity, sizeIdx, threadCache) ||
             qInit.allocate(buf, reqCapacity, sizeIdx, threadCache) ||
-            q075.allocate(buf, reqCapacity, sizeIdx, threadCache)) {
+            q075.allocate(buf, reqCapacity, sizeIdx, threadCache)) { // 分配大于 8K 的内存时，其链表的访问顺序是 q050->q025->q000->qInit->q075，遍历检查 PoolChunkList 中是否有 PoolChunk 可以用于内存分配
             return;
         }
 

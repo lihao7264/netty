@@ -58,7 +58,7 @@ final class PoolThreadCache { // 每个线程一个PoolThreadCache对象
     private final int freeSweepAllocationThreshold;
     private final AtomicBoolean freed = new AtomicBoolean();
 
-    private int allocations;
+    private int allocations; // // 执行 allocate() 的次数
 
     // TODO: Test if adding padding helps under contention
     //private long pad0, pad1, pad2, pad3, pad4, pad5, pad6, pad7;
@@ -165,7 +165,7 @@ final class PoolThreadCache { // 每个线程一个PoolThreadCache对象
             return false;
         }
         boolean allocated = cache.allocate(buf, reqCapacity, this);
-        if (++allocations >= freeSweepAllocationThreshold) {
+        if (++allocations >= freeSweepAllocationThreshold) { // 默认每执行 8192 次 allocate()，就会调用一次 trim() 进行内存整理
             allocations = 0;
             trim();
         }
@@ -254,7 +254,7 @@ final class PoolThreadCache { // 每个线程一个PoolThreadCache对象
         return cache.free(finalizer);
     }
 
-    void trim() {
+    void trim() {  // 触发 PoolThreadCache 进行一次内存整理
         trim(smallSubPageDirectCaches);
         trim(normalDirectCaches);
         trim(smallSubPageHeapCaches);
@@ -336,7 +336,7 @@ final class PoolThreadCache { // 每个线程一个PoolThreadCache对象
         private final int size; // 缓存的个数
         private final Queue<Entry<T>> queue; // 实体队列（queue）:存储每种大小的ByteBuffer
         private final SizeClass sizeClass; // 类型  老版本三种：tiny、small、normal，现在两种：small、normal
-        private int allocations; // 已经释放了多少个
+        private int allocations; //表示 MemoryRegionCache 距离上一次内存整理已经发生了多少次 allocate 调用
 
         MemoryRegionCache(int size, SizeClass sizeClass) {
             this.size = MathUtil.safeFindNextPositivePowerOfTwo(size); // size进行简单的规格化：查找下一个大于等于当前size的2的幂次方的数（5125->512、510->512）
@@ -402,14 +402,14 @@ final class PoolThreadCache { // 每个线程一个PoolThreadCache对象
             return numFreed;
         }
 
-        /**
+        /** 如果分配不够频繁，则释放缓存的 {@link PoolChunk}。
          * Free up cached {@link PoolChunk}s if not allocated frequently enough.
          */
         public final void trim() {
-            int free = size - allocations;
+            int free = size - allocations; // size - allocations 衡量内存分配执行的频繁程度(当调用次数小于 size 时，表示 MemoryRegionCache 中缓存的内存块并不常用，从队列中取出内存块依次释放)
             allocations = 0;
 
-            // We not even allocated all the number that are
+            // We not even allocated all the number that are  我们甚至没有分配所有的号码
             if (free > 0) {
                 free(free, false);
             }
@@ -430,7 +430,7 @@ final class PoolThreadCache { // 每个线程一个PoolThreadCache对象
             chunk.arena.freeChunk(chunk, handle, entry.normCapacity, sizeClass, nioBuffer, finalizer);
         }
 
-        static final class Entry<T> {
+        static final class Entry<T> { // 用于本地缓存封装内存块信息 进行池化
             final Handle<Entry<?>> recyclerHandle; // 回收处理器
             PoolChunk<T> chunk; // 池块
             ByteBuffer nioBuffer;

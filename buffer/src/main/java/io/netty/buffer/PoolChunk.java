@@ -128,7 +128,7 @@ import java.util.PriorityQueue;
  * 3) merge continuous avail runs
  * 4) save the merged run
  *
- */
+ */ // PoolChunk 是真正存储内存数据的地方，每个 PoolChunk 的默认大小为 16M
 final class PoolChunk<T> implements PoolChunkMetric {
     private static final int SIZE_BIT_LENGTH = 15;
     private static final int INUSED_BIT_LENGTH = 1;
@@ -142,20 +142,20 @@ final class PoolChunk<T> implements PoolChunkMetric {
 
     final PoolArena<T> arena;
     final Object base;
-    final T memory;
+    final T memory; // 存储的数据
     final boolean unpooled;
 
-    /**
+    /** 存储每个avail runs的第一页和最后一页
      * store the first page and last page of each avail run
      */
     private final LongLongHashMap runsAvailMap;
 
-    /**
+    /** 管理所有avail runs
      * manage all avail runs
      */
     private final LongPriorityQueue[] runsAvail;
 
-    /**
+    /** PoolChunk 中管理的 2048 个 8K 内存块
      * manage all subpages in this chunk
      */
     private final PoolSubpage<T>[] subpages;
@@ -171,7 +171,7 @@ final class PoolChunk<T> implements PoolChunkMetric {
     // This may be null if the PoolChunk is unpooled as pooling the ByteBuffer instances does not make any sense here.
     private final Deque<ByteBuffer> cachedNioBuffers;
 
-    int freeBytes;
+    int freeBytes; // 剩余的内存大小
 
     PoolChunkList<T> parent;
     PoolChunk<T> prev;
@@ -315,8 +315,8 @@ final class PoolChunk<T> implements PoolChunkMetric {
         initBuf(buf, nioBuffer, handle, reqCapacity, cache);
         return true;
     }
-
-    private long allocateRun(int runSize) {
+    // 分配若干page
+    private long allocateRun(int runSize) { // runSize 规格值，该值是pageSize的整数倍
         int pages = runSize >> pageShifts;
         int pageIdx = arena.pages2pageIdx(pages);
 
@@ -407,10 +407,10 @@ final class PoolChunk<T> implements PoolChunkMetric {
         return handle;
     }
 
-    /**
+    /** PoolSubpage 的创建过程，由于分配的内存小于 8K
      * Create / initialize a new PoolSubpage of normCapacity. Any PoolSubpage created / initialized here is added to
      * subpage pool in the PoolArena that owns this PoolChunk
-     *
+     * 创建/初始化一个新的 normCapacity 的 PoolSubpage。在此创建/初始化的任何 PoolSubpage 都会添加到拥有此 PoolChunk 的 PoolArena 中的子页面池中
      * @param sizeIdx sizeIdx of normalized size
      *
      * @return index in memoryMap
@@ -418,7 +418,7 @@ final class PoolChunk<T> implements PoolChunkMetric {
     private long allocateSubpage(int sizeIdx) {
         // Obtain the head of the PoolSubPage pool that is owned by the PoolArena and synchronize on it.
         // This is need as we may add it back and so alter the linked-list structure.
-        PoolSubpage<T> head = arena.findSubpagePoolHead(sizeIdx);
+        PoolSubpage<T> head = arena.findSubpagePoolHead(sizeIdx);  // 根据内存大小找到 PoolArena 中 subpage 数组对应的头结点
         synchronized (head) {
             //allocate a new run
             int runSize = calculateRunSize(sizeIdx);

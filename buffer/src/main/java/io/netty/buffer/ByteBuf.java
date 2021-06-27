@@ -71,7 +71,7 @@ import java.nio.charset.UnsupportedCharsetException;
  *      +-------------------+------------------+------------------+
  *      |                   |                  |                  |
  *      0      <=      readerIndex   <=   writerIndex    <=    capacity
- * </pre>                      可读数据        空闲空间（可进行写数据）
+ * </pre>   废弃字节（数据）     可读字节（数据）    空闲/可写字节（可进行写数据）
  *                读数据，从当前指针开始   写数据，从当前指针开始  容量
  * <h4>Readable bytes (the actual content)</h4>
  *
@@ -320,7 +320,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      */
     public abstract ByteBuf asReadOnly();
 
-    /**
+    /** 当前的读指针的 readerIndex 位置
      * Returns the {@code readerIndex} of this buffer.
      */
     public abstract int readerIndex();
@@ -335,7 +335,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      */
     public abstract ByteBuf readerIndex(int readerIndex);
 
-    /**
+    /** 当前写指针 writeIndex 位置
      * Returns the {@code writerIndex} of this buffer.
      */
     public abstract int writerIndex();
@@ -403,7 +403,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      */
     public abstract ByteBuf setIndex(int readerIndex, int writerIndex);
 
-    /** writeIndex-readIndex
+    /** 获取ByteBuf当前可读取的字节数:writeIndex-readIndex
      * Returns the number of readable bytes which is equal to
      * {@code (this.writerIndex - this.readerIndex)}.
      */
@@ -430,19 +430,19 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
         return writableBytes();
     }
 
-    /**
+    /**判断 ByteBuf 是否可读，如果 writerIndex 大于 readerIndex，那么 ByteBuf 是可读的，否则是不可读状态
      * Returns {@code true}
      * if and only if {@code (this.writerIndex - this.readerIndex)} is greater
      * than {@code 0}.
      */
     public abstract boolean isReadable();
 
-    /**
+    /** 当且仅当此缓冲区包含等于或大于指定数量的元素时，才返回 {@code true}。
      * Returns {@code true} if and only if this buffer contains equal to or more than the specified number of elements.
      */
     public abstract boolean isReadable(int size);
 
-    /**
+    /** 是否可写（capacity - writerIndex）> 0
      * Returns {@code true}
      * if and only if {@code (this.capacity - this.writerIndex)} is greater
      * than {@code 0}.
@@ -474,7 +474,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      */
     public abstract ByteBuf markReaderIndex();
 
-    /** 恢复保存的readIndex指针
+    /** 恢复保存的readIndex指针（将当前 readerIndex 重置为之前保存的位置）
      * Repositions the current {@code readerIndex} to the marked
      * {@code readerIndex} in this buffer.
      *
@@ -566,7 +566,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      */
     public abstract boolean getBoolean(int index);
 
-    /**
+    /** 获取某个位置的字节数据（不会改变指针位置）
      * Gets a byte at the specified absolute {@code index} in this buffer.
      * This method does not modify {@code readerIndex} or {@code writerIndex} of
      * this buffer.
@@ -1561,7 +1561,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
         return Double.longBitsToDouble(readLongLE());
     }
 
-    /**
+    /** 将 ByteBuf 的数据读取相应的字节到字节数组 dst 中
      * Transfers this buffer's data to a newly created buffer starting at
      * the current {@code readerIndex} and increases the {@code readerIndex}
      * by the number of the transferred bytes (= {@code length}).
@@ -2157,7 +2157,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      */
     public abstract int forEachByteDesc(int index, int length, ByteProcessor processor);
 
-    /**
+    /** 从原始的 ByteBuf 中拷贝所有信息，所有数据都是独立的，向 copy() 分配的 ByteBuf 中写数据不会影响原始的 ByteBuf
      * Returns a copy of this buffer's readable bytes.  Modifying the content
      * of the returned buffer or this buffer does not affect each other at all.
      * This method is identical to {@code buf.copy(buf.readerIndex(), buf.readableBytes())}.
@@ -2174,7 +2174,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      */
     public abstract ByteBuf copy(int index, int length);
 
-    /**
+    /** 默认截取  readerIndex 到 writerIndex 之间的数据，最大容量 maxCapacity 为原始 ByteBuf 的可读取字节数，底层分配的内存、引用计数都与原始的 ByteBuf 共享
      * Returns a slice of this buffer's readable bytes. Modifying the content
      * of the returned buffer or this buffer affects each other's content
      * while they maintain separate indexes and marks.  This method is
@@ -2226,7 +2226,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      */
     public abstract ByteBuf retainedSlice(int index, int length);
 
-    /**
+    /** 截取的是整个原始 ByteBuf 信息，底层分配的内存、引用计数也是共享的。如果向 duplicate() 分配出来的 ByteBuf 写入数据，那么都会影响到原始的 ByteBuf 底层数据。
      * Returns a buffer which shares the whole region of this buffer.
      * Modifying the content of the returned buffer or this buffer affects
      * each other's content while they maintain separate indexes and marks.

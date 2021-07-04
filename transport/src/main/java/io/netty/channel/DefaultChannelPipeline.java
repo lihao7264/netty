@@ -220,7 +220,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
                 return this;
             }
         }
-        callHandlerAdded0(newCtx); //  如果不在当前线程的话，直接执行，调用handler的 HandlerAdded 方法
+        callHandlerAdded0(newCtx); //  如果在当前线程的话，直接执行，调用handler的 HandlerAdded 方法
         return this;
     }
     // 添加当前节点到链表末尾tail节点之前

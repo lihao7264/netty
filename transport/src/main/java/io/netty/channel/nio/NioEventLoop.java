@@ -453,7 +453,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                         }
                         nextWakeupNanos.set(curDeadlineNanos); // 更新nextWakeupNanos为阻塞时间。
                         try {// 这时如果还没有任务加入，则执行select，阻塞线程。select方法返回结果作为新的strategy。
-                            if (!hasTasks()) {
+                            if (!hasTasks()) { // 轮询 I/O 事件
                                 strategy = select(curDeadlineNanos);
                             }
                         } finally { // 设置值之后其他线程在短期内还是可能读到旧值,这里将nextWakeupNanos设置为AWAKE，主要是减少wakeup方法中不必要的wakeup操作。所以使用lazySet方法也没有问题。
@@ -491,10 +491,10 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                     final long ioStartTime = System.nanoTime();
                     try {  //运行所有普通任务和定时任务，不限制时间
                         processSelectedKeys(); // 处理IO事件(Channel 感兴趣的就绪 IO 事件)
-                    } finally {
+                    } finally { // 处理完 I/O 事件，再处理异步任务队列
                         // Ensure we always run tasks. 执行IO事件所占CPU时间百分比，默认50，ioTime * (100 - ioRatio) / ioRatio，通过ioTime，ioRatio计算处理任务的CPU时间
                         final long ioTime = System.nanoTime() - ioStartTime; // 计算io时间处理的时间
-                        ranTasks = runAllTasks(ioTime * (100 - ioRatio) / ioRatio); // 处理外部线程放到taskQueue（是一个mpscq）中的任务   //运行所有普通任务和定时任务，限制时间
+                        ranTasks = runAllTasks(ioTime * (100 - ioRatio) / ioRatio); // 处理外部线程放到taskQueue（是一个mpscq）中的任务 --- 运行所有普通任务和定时任务，限制时间
                     }
                 } else { // 如果没有比率，也没有事件，那就处理任务，没有超时时间
                     ranTasks = runAllTasks(0); // This will run the minimum number of tasks

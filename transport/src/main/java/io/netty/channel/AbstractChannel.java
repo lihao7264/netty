@@ -70,9 +70,9 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
      */
     protected AbstractChannel(Channel parent) {
         this.parent = parent;// 如果是创建客户端Channel，这里的parent就是服务端的netty channel
-        id = newId();  // 创建 ChannelId 对象
-        unsafe = newUnsafe();  // 创建 Unsafe 对象
-        pipeline = newChannelPipeline();  // 创建 DefaultChannelPipeline 对象（逻辑链）
+        id = newId();  // 创建 ChannelId 对象 （Channel 全局唯一 id ）
+        unsafe = newUnsafe();  // unsafe 操作底层读写
+        pipeline = newChannelPipeline();  // 创建 DefaultChannelPipeline 对象（逻辑链）  --  负责业务处理器编排
     }
 
     /**
@@ -476,9 +476,9 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             //  设置 Channel 的 eventLoop 属性
             AbstractChannel.this.eventLoop = eventLoop; // 绑定线程（也就是 接受连接的线程组 ） --- 当前的NioEventLoop绑定到客户端的channel上
             // 在 EventLoop 中执行注册逻辑
-            if (eventLoop.inEventLoop()) { // 是否在客户端的NioEventLoop中，不在，在服务端的NioEventLoop中
+            if (eventLoop.inEventLoop()) { // Reactor 线程内部调用 ---- 是否在客户端的NioEventLoop中，不在，在服务端的NioEventLoop中
                 register0(promise);
-            } else {
+            } else {// 外部线程调用
                 try {
                     eventLoop.execute(new Runnable() {
                         @Override
@@ -508,18 +508,18 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 doRegister(); // 执行注册逻辑（调用jdk底层注册）--- jdk的channel注册到selector上
                 neverRegistered = false;  // 标记首次注册为 false
                 registered = true;  // 标记 Channel 为已注册
-
+                //  触发 handlerAdded 事件
                 // Ensure we call handlerAdded(...) before we actually notify the promise. This is needed as the
                 // user may already fire events through the pipeline in the ChannelFutureListener.
                 pipeline.invokeHandlerAddedIfNeeded(); // 触发 ChannelInitializer 执行，进行 Handler 初始化。（添加一些channelHandler到Channel上的时候，就会触发到用户的回调）
 
                 safeSetSuccess(promise);  // 回调通知 `promise` 执行成功
-                pipeline.fireChannelRegistered();  // 触发通知已注册事件（传播channel注册成功的事件）
+                pipeline.fireChannelRegistered();  // 触发通知已注册事件（传播channel注册成功的事件） -- 触发 channelRegistered 事件
                 // Only fire a channelActive if the channel has never been registered. This prevents firing
-                // multiple channel actives if the channel is deregistered and re-registered.
+                // multiple channel actives if the channel is deregistered and re-registered.  启动的时候，此时 Channel 还未注册绑定地址，所以处于非活跃状态
                 if (isActive()) { // 启动的时候，这里返回的都是false 。（后面客户端连接接入的时候，这里返回true）
                     if (firstRegistration) { // 第一次注册到NioEventLoop上
-                        pipeline.fireChannelActive();
+                        pipeline.fireChannelActive(); //  Channel 当前状态为活跃时，触发 channelActive 事件
                     } else if (config().isAutoRead()) {
                         // This channel was registered before and autoRead() is set. This means we need to begin read
                         // again so that we process inbound data.
@@ -1093,7 +1093,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
      */
     protected abstract SocketAddress remoteAddress0();
 
-    /**
+    /** 在将 {@link Channel} 注册到其 {@link EventLoop} 作为注册过程的一部分后调用。
      * Is called after the {@link Channel} is registered with its {@link EventLoop} as part of the register process.
      *
      * Sub-classes may override this method

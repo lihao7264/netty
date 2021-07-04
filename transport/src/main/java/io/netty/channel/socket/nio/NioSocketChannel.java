@@ -66,7 +66,7 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
              *
              *  See <a href="https://github.com/netty/netty/issues/2308">#2308</a>.
              */
-            return provider.openSocketChannel(); // 效果和 SocketChannel#open() 方法创建 SocketChannel 对象是一致。
+            return provider.openSocketChannel(); // 效果和 SocketChannel#open() 方法创建 jdk底层的 SocketChannel 对象是一致。
         } catch (IOException e) {
             throw new ChannelException("Failed to open a socket.", e);
         }

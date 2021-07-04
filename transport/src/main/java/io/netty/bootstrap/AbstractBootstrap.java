@@ -269,23 +269,23 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     }
 
     private ChannelFuture doBind(final SocketAddress localAddress) {
-        final ChannelFuture regFuture = initAndRegister();  // 初始化并注册一个 Channel 对象，因为注册是异步的过程，所以返回一个 ChannelFuture 对象。
+        final ChannelFuture regFuture = initAndRegister();  // 初始化并注册一个 Channel 对象，因为注册是异步的过程，所以返回一个 ChannelFuture 对象。 (调用 initAndRegister() 初始化并注册 Channel，同时返回一个 ChannelFuture 实例 regFuture，可以猜测出 initAndRegister() 是一个异步的过程。)
         final Channel channel = regFuture.channel();
-        if (regFuture.cause() != null) { // 若发生异常，直接进行返回。
+        if (regFuture.cause() != null) { // 若发生异常，直接进行返回。(通过 regFuture.cause() 方法判断 initAndRegister() 的过程是否发生异常，如果发生异常则直接返回。)
             return regFuture;
         }
         // 绑定 Channel 的端口，并注册 Channel 到 SelectionKey 中。
-        if (regFuture.isDone()) { // 注册已完成
+        if (regFuture.isDone()) { // 注册已完成( regFuture.isDone() 表示 initAndRegister() 是否执行完毕，如果执行完毕则调用 doBind0() 进行 Socket 绑定。)
             // At this point we know that the registration was complete and successful.
             ChannelPromise promise = channel.newPromise(); // 至此，我们知道注册已完成且成功。
             doBind0(regFuture, channel, localAddress, promise);  // 绑定
             return promise;
-        } else {// 注册未完成
+        } else {// 注册未完成 (如果 initAndRegister() 还没有执行结束)
             // Registration future is almost always fulfilled already, but just in case it's not.
             final PendingRegistrationPromise promise = new PendingRegistrationPromise(channel);
             regFuture.addListener(new ChannelFutureListener() { // 如果异步注册对应的 ChanelFuture 未完成，则调用 ChannelFuture#addListener(ChannelFutureListener) 方法，添加监听器，在注册完成后，进行回调执行 #doBind0(...) 方法的逻辑。
                 @Override
-                public void operationComplete(ChannelFuture future) throws Exception {
+                public void operationComplete(ChannelFuture future) throws Exception {// regFuture 会添加一个 ChannelFutureListener 回调监听，当 initAndRegister() 执行结束后会调用 operationComplete()，同样通过 doBind0() 进行端口绑定。
                     Throwable cause = future.cause();
                     if (cause != null) {
                         // Registration on the EventLoop failed so fail the ChannelPromise directly to not cause an

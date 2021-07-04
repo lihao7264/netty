@@ -134,7 +134,7 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
             } finally {
                 ChannelPipeline pipeline = ctx.pipeline(); // 获取当前连接的pipeline
                 if (pipeline.context(this) != null) {
-                    pipeline.remove(this); // 从pipeline中删除自身
+                    pipeline.remove(this); // 从pipeline中删除自身 ( 将 ChannelInitializer 自身从 Pipeline 中移出)
                 }
             }
             return true;

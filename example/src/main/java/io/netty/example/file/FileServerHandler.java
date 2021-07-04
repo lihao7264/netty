@@ -24,7 +24,7 @@ import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedFile;
 
 import java.io.RandomAccessFile;
-
+// FileRegion 的使用示例
 public class FileServerHandler extends SimpleChannelInboundHandler<String> {
 
     @Override

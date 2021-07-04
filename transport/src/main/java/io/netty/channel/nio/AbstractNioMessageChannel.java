@@ -76,7 +76,7 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
             try {
                 try {
                     do {
-                        int localRead = doReadMessages(readBuf); // 创建channel，获取到连接，就返回1
+                        int localRead = doReadMessages(readBuf); // 创建channel，获取到连接，就返回1  （ while 循环不断读取 Buffer 中的数据）
                         if (localRead == 0) {
                             break;
                         }
@@ -94,11 +94,11 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
                 int size = readBuf.size();
                 for (int i = 0; i < size; i ++) { // 遍历每一条客户端连接，调用服务端pipeline的fireChannelRead方法
                     readPending = false;
-                    pipeline.fireChannelRead(readBuf.get(i)); // 通过fireChannelRead的方式传播过pipeline
+                    pipeline.fireChannelRead(readBuf.get(i)); // 通过fireChannelRead的方式传播过pipeline （传播读取事件）
                 }
                 readBuf.clear();
                 allocHandle.readComplete();
-                pipeline.fireChannelReadComplete();
+                pipeline.fireChannelReadComplete(); // 传播读取完毕事件
 
                 if (exception != null) {
                     closed = closeOnReadError(exception);
@@ -197,7 +197,7 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
         return true;
     }
 
-    /**
+    /** 将消息读入给定数组并返回读取的数量。
      * Read messages into the given array and return the amount which was read.
      */
     protected abstract int doReadMessages(List<Object> buf) throws Exception;

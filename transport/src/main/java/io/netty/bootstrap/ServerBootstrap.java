@@ -129,16 +129,16 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
     // 初始化 Channel 配置。（入参为ServerSocketChannel）
     @Override
     void init(Channel channel) { // 1、配置用户自定义的ChannelOptions、ChannelAttrs
-        setChannelOptions(channel, newOptionsArray(), logger); // // 初始化 Channel 的可选项集合 (将启动器配置的可选项集合)
-        setAttributes(channel, newAttributesArray());  // 初始化 Channel 的属性集合
-        // 拿到服务端的pipeline
-        ChannelPipeline p = channel.pipeline();
-        // 记录当前的属性 (记录启动器配置的子 Channel的属性)
+        setChannelOptions(channel, newOptionsArray(), logger); // // 初始化 Channel 的可选项集合 (将启动器配置的可选项集合) --- 设置 Socket 参数
+        setAttributes(channel, newAttributesArray());  // 初始化 Channel 的属性集合 --  保存用户自定义属性
+        // 获取 ServerBootstrapAcceptor 的构造参数
+        ChannelPipeline p = channel.pipeline(); // 拿到服务端的pipeline
+        //  為通过服务端Channel创建出来的新连接的channel创建的
         final EventLoopGroup currentChildGroup = childGroup;
         final ChannelHandler currentChildHandler = childHandler;
-        final Entry<ChannelOption<?>, Object>[] currentChildOptions = newOptionsArray(childOptions); // 为通过服务端Channel创建出来的新连接的channel创建的
-        final Entry<AttributeKey<?>, Object>[] currentChildAttrs = newAttributesArray(childAttrs); // 为通过服务端Channel创建出来的新连接的channel创建的
-        // 添加 ChannelInitializer 对象到 pipeline 中，用于后续初始化 ChannelHandler 到 pipeline 中。
+        final Entry<ChannelOption<?>, Object>[] currentChildOptions = newOptionsArray(childOptions); // 记录当前的属性 (记录启动器配置的子 Channel的Socket參數)
+        final Entry<AttributeKey<?>, Object>[] currentChildAttrs = newAttributesArray(childAttrs); // 记录当前的属性 (记录启动器配置的子 Channel的属性)
+        // 添加 ChannelInitializer 对象（特殊的 Handler 处理器）到 pipeline 中，用于后续初始化 ChannelHandler 到 pipeline 中。
         p.addLast(new ChannelInitializer<Channel>() {
             @Override
             public void initChannel(final Channel ch) { // 从 io.netty.channel.DefaultChannelPipeline.invokeHandlerAddedIfNeeded 进入执行
@@ -205,13 +205,13 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         @SuppressWarnings("unchecked")
         public void channelRead(ChannelHandlerContext ctx, Object msg) { // 通过pipeline的 fireChannelRead方法传播进来
             final Channel child = (Channel) msg;
-
+            // 在客户端 Channel 中添加 childHandler，childHandler 是用户在启动类中通过 childHandler() 方法指定的
             child.pipeline().addLast(childHandler); // 添加childHandler
             // childOptions、childAttrs 服务端启动的时候设置的
             setChannelOptions(child, childOptions, logger); // 设置channel的options（主要是跟底层tcp读写相关的参数）
             setAttributes(child, childAttrs); // childAttrs主要就是为了可以在客户端channel上自定义一些属性（密钥、存活时间等）
 
-            try { // childGroup就是 workerGroup(一个NioEventLoopGroup)
+            try { // childGroup就是 workerGroup(一个NioEventLoopGroup)  注册客户端 Channel
                 childGroup.register(child).addListener(new ChannelFutureListener() {
                     @Override
                     public void operationComplete(ChannelFuture future) throws Exception {

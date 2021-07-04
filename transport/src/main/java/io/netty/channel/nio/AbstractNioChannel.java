@@ -373,7 +373,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
     }
 
     @Override
-    protected void doRegister() throws Exception { // 服务端channel跟客户端channel都会使用该方法进行channel跟selector的注册
+    protected void doRegister() throws Exception { // 服务端channel跟客户端channel都会使用该方法进行channel跟selector的注册（ JDK 底层注册 Channel 的过程）
         boolean selected = false;
         for (;;) {
             try { // jdk 底层的channel 注册到selector上（关心的事件为0，不关心任何事件），将当前netty的channel 做attachment 绑定到selector上去
@@ -410,7 +410,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         readPending = true;
         // 将创建 NioServerSocketChannel 时，设置的 readInterestOp = SelectionKey.OP_ACCEPT 添加为感兴趣的事件。(服务端可以开始处理客户端的连接事件。)
         final int interestOps = selectionKey.interestOps(); // 获取selectionKey上的感兴趣的事件。（在服务端启动过程中，这里返回的会是0）
-        if ((interestOps & readInterestOp) == 0) {// 条件成立
+        if ((interestOps & readInterestOp) == 0) {// 条件成立   --- 注册 OP_ACCEPT 事件到服务端 Channel 的事件集合
             selectionKey.interestOps(interestOps | readInterestOp); // 增加一个事件（服务端启动过程中，readInterestOp = SelectionKey.OP_ACCEPT  客户端的连接channel，更新感兴趣事件为读事件，readInterestOp = SelectionKey.OP_READ）
         }
     }

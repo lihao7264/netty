@@ -29,7 +29,7 @@ public interface EventLoopGroup extends EventExecutorGroup {
     @Override
     EventLoop next();
 
-    /**
+    /** 使用此 {@link EventLoop} 注册一个 {@link Channel}。注册完成后，返回的 {@link ChannelFuture} 将收到通知。
      * Register a {@link Channel} with this {@link EventLoop}. The returned {@link ChannelFuture}
      * will get notified once the registration was complete.
      */

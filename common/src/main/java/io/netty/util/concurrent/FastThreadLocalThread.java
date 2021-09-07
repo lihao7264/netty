@@ -25,14 +25,14 @@ public class FastThreadLocalThread extends Thread {
     // This will be set to true if we have a chance to wrap the Runnable.
     private final boolean cleanupFastThreadLocals;
 
-    private InternalThreadLocalMap threadLocalMap;
+    private InternalThreadLocalMap threadLocalMap; // 当前线程保存的变量（通过FastThreadLocal查询）
 
     public FastThreadLocalThread() {
         cleanupFastThreadLocals = false;
     }
 
     public FastThreadLocalThread(Runnable target) {
-        super(FastThreadLocalRunnable.wrap(target));
+        super(FastThreadLocalRunnable.wrap(target)); // 包装成FastThreadLocalRunnable
         cleanupFastThreadLocals = true;
     }
 
